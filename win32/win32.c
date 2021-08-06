@@ -5036,6 +5036,7 @@ Perl_win32_init(int *argcp, char ***argvp)
 void
 Perl_win32_term(void)
 {
+    SHUTDOWN_TERM;
     HINTS_REFCNT_TERM;
     OP_REFCNT_TERM;
     PERLIO_TERM;
