@@ -268,7 +268,7 @@ XS(XS_Cygwin_win_to_posix_path)
     STRLEN len;
     int err = 0;
     char *src_path;
-    char *posix_path;
+    char *converted_path;
     int isutf8 = 0;
 
     if (items < 1 || items > 2)
@@ -316,38 +316,38 @@ XS(XS_Cygwin_win_to_posix_path)
             wlen = newlen;
         }
 
-        posix_path = wide_to_utf8(wpath);
+        converted_path = wide_to_utf8(wpath);
 
         safefree(wpath);
         safefree(wbuf);
     } else {
         int what = absolute_flag ? CCP_WIN_A_TO_POSIX : CCP_WIN_A_TO_POSIX | CCP_RELATIVE;
-        posix_path = (char *) safemalloc (len + PATH_LEN_GUESS);
-        err = cygwin_conv_path(what, src_path, posix_path, len + PATH_LEN_GUESS);
+        converted_path = (char *) safemalloc (len + PATH_LEN_GUESS);
+        err = cygwin_conv_path(what, src_path, converted_path, len + PATH_LEN_GUESS);
         if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-            int newlen = cygwin_conv_path(what, src_path, posix_path, 0);
-            posix_path = (char *) realloc(&posix_path, newlen);
-            err = cygwin_conv_path(what, src_path, posix_path, newlen);
+            int newlen = cygwin_conv_path(what, src_path, converted_path, 0);
+            converted_path = (char *) realloc(&converted_path, newlen);
+            err = cygwin_conv_path(what, src_path, converted_path, newlen);
         }
     }
 #else
-    posix_path = (char *) safemalloc (len + PATH_LEN_GUESS);
+    converted_path = (char *) safemalloc (len + PATH_LEN_GUESS);
     if (absolute_flag)
-        err = cygwin_conv_to_full_posix_path(src_path, posix_path);
+        err = cygwin_conv_to_full_posix_path(src_path, converted_path);
     else
-        err = cygwin_conv_to_posix_path(src_path, posix_path);
+        err = cygwin_conv_to_posix_path(src_path, converted_path);
 #endif
     if (!err) {
         EXTEND(SP, 1);
-        ST(0) = sv_2mortal(newSVpv(posix_path, 0));
+        ST(0) = sv_2mortal(newSVpv(converted_path, 0));
         if (isutf8) { /* src was utf-8, so result should also */
             /* TODO: convert ANSI (local windows encoding) to utf-8 on cygwin-1.5 */
             SvUTF8_on(ST(0));
         }
-        safefree(posix_path);
+        safefree(converted_path);
         XSRETURN(1);
     } else {
-        safefree(posix_path);
+        safefree(converted_path);
         XSRETURN_UNDEF;
     }
 }
@@ -358,7 +358,7 @@ XS(XS_Cygwin_posix_to_win_path)
     int absolute_flag = 0;
     STRLEN len;
     int err = 0;
-    char *src_path, *win_path;
+    char *src_path, *converted_path;
     int isutf8 = 0;
 
     if (items < 1 || items > 2)
@@ -408,39 +408,39 @@ XS(XS_Cygwin_posix_to_win_path)
             wlen = newlen;
         }
 
-        win_path = wide_to_utf8(wpath);
+        converted_path = wide_to_utf8(wpath);
 
         safefree(wpath);
         safefree(wbuf);
     } else {
         int what = absolute_flag ? CCP_POSIX_TO_WIN_A : CCP_POSIX_TO_WIN_A | CCP_RELATIVE;
-        win_path = (char *) safemalloc(len + PATH_LEN_GUESS);
-        err = cygwin_conv_path(what, src_path, win_path, len + PATH_LEN_GUESS);
+        converted_path = (char *) safemalloc(len + PATH_LEN_GUESS);
+        err = cygwin_conv_path(what, src_path, converted_path, len + PATH_LEN_GUESS);
         if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-            int newlen = cygwin_conv_path(what, src_path, win_path, 0);
-            win_path = (char *) realloc(&win_path, newlen);
-            err = cygwin_conv_path(what, src_path, win_path, newlen);
+            int newlen = cygwin_conv_path(what, src_path, converted_path, 0);
+            converted_path = (char *) realloc(&converted_path, newlen);
+            err = cygwin_conv_path(what, src_path, converted_path, newlen);
         }
     }
 #else
     if (isutf8)
         Perl_warn(aTHX_ "can't convert utf8 path");
-    win_path = (char *) safemalloc(len + PATH_LEN_GUESS);
+    converted_path = (char *) safemalloc(len + PATH_LEN_GUESS);
     if (absolute_flag)
-        err = cygwin_conv_to_full_win32_path(src_path, win_path);
+        err = cygwin_conv_to_full_win32_path(src_path, converted_path);
     else
-        err = cygwin_conv_to_win32_path(src_path, win_path);
+        err = cygwin_conv_to_win32_path(src_path, converted_path);
 #endif
     if (!err) {
         EXTEND(SP, 1);
-        ST(0) = sv_2mortal(newSVpv(win_path, 0));
+        ST(0) = sv_2mortal(newSVpv(converted_path, 0));
         if (isutf8) {
             SvUTF8_on(ST(0));
         }
-        safefree(win_path);
+        safefree(converted_path);
         XSRETURN(1);
     } else {
-        safefree(win_path);
+        safefree(converted_path);
         XSRETURN_UNDEF;
     }
 }
