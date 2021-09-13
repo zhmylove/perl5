@@ -331,6 +331,10 @@ XS(XS_Cygwin_win_to_posix_path)
         }
     }
 #else
+
+    if (isutf8)
+        Perl_warn(aTHX_ "can't convert utf8 path");
+
     converted_path = (char *) safemalloc (len + PATH_LEN_GUESS);
     if (absolute_flag)
         err = cygwin_conv_to_full_posix_path(src_path, converted_path);
