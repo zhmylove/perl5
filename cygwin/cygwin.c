@@ -311,36 +311,38 @@ S_convert_path_common(const direction_t direction)
                      ? CCP_WIN_W_TO_POSIX
                      : CCP_POSIX_TO_WIN_W);
         STRLEN wlen;
-        wchar_t *wbuf = NULL;
-        wchar_t *wpath = NULL;
+        wchar_t *wsrc = NULL;       /* The source, as a wchar_t */
+        wchar_t *wconverted = NULL; /* wsrc, converted to the destination */
 
-        if (!IN_BYTES) {
+        /* ptr to either wsrc or src_path under BYTES, so can have common code
+         * below */
+        wchar_t *which_src = src_path;
+
+        if (LIKELY(! IN_BYTES)) {    /* Normal case, convert UTF-8 to UTF-16 */
             wlen = PATH_LEN_GUESS;
-            wpath = utf8_to_wide_extra_len(src_path, &wlen);
-
-            if (wlen > 0) {
-                wbuf = (wchar_t *) safemalloc(wlen);
-                err = cygwin_conv_path(what, wpath, wbuf, wlen);
-            }
+            wsrc = utf8_to_wide_extra_len(src_path, &wlen);
+            which_src = wsrc;
         }
         else { /* use bytes; assume already UTF-16 encoded bytestream */
             wlen = sizeof(wchar_t) * (len + PATH_LEN_GUESS);
-            wpath = (wchar_t *) safemalloc(sizeof(wchar_t)*len);
-            wbuf = (wchar_t *) safemalloc(wlen);
-            err = cygwin_conv_path(what, src_path, wbuf, wlen);
+            which_src = (wchar_t *) src_path;
+        }
+
+        if (LIKELY(wlen > 0)) { /* Make sure didn't get an error */
+            wconverted = (wchar_t *) safemalloc(wlen);
+            err = cygwin_conv_path(what, which_src, wconverted, wlen);
         }
 
         if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-            int newlen = cygwin_conv_path(what, wpath, wbuf, 0);
-            wbuf = (wchar_t *) realloc(&wbuf, newlen);
-            err = cygwin_conv_path(what, wpath, wbuf, newlen);
-            wlen = newlen;
+            int newlen = cygwin_conv_path(what, which_src, wconverted, 0);
+            wconverted = (wchar_t *) realloc(&wconverted, newlen);
+            err = cygwin_conv_path(what, which_src, wconverted, newlen);
         }
 
-        converted_path = wide_to_utf8(wpath);
+        converted_path = wide_to_utf8(wconverted);
 
-        safefree(wpath);
-        safefree(wbuf);
+        safefree(wsrc);
+        safefree(wconverted);
     } else {
         int what =  ((absolute_flag) ? 0 : CCP_RELATIVE)
                   | ((direction == to_posix)
