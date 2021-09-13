@@ -162,6 +162,7 @@ leave:
 char*
 wide_to_utf8(const wchar_t *wbuf)
 {
+    dTHX;
     const Size_t wlen = (wcslen(wbuf) + 1) * sizeof(wchar_t);
 
     /* Max expansion factor is 3/2 */
@@ -182,6 +183,7 @@ utf8_to_wide_extra_len(const char *buf, Size_t *extra_len)
      * extra (wide) characters in the result.  The result must be freed by the
      * caller when no longer needed */
 
+    dTHX;
     Size_t len = strlen(buf) + 1;
 
     /* Max expansion factor is sizeof(wchar_t) */
@@ -189,7 +191,7 @@ utf8_to_wide_extra_len(const char *buf, Size_t *extra_len)
 
     wchar_t* wbuf = (wchar_t *) safemalloc(wlen);
 
-    utf8_to_utf16(buf, wbuf, len, &wlen);
+    utf8_to_utf16(buf, (U8 *) wbuf, len, &wlen);
 
     return wbuf;
 }
@@ -271,13 +273,14 @@ XS(XS_Cygwin_winpid_to_pid)
  *
  * These numbers are chosen so can be or'd with absolute flag to get 0..3 */
 typedef enum {
-    to_posix = 0;
-    to_win   = 2;
+    to_posix = 0,
+    to_win   = 2
 } direction_t;
 
 static void
 S_convert_path_common(const direction_t direction)
 {
+    dTHX;
     dXSARGS;
     bool absolute_flag = 0;
     STRLEN len;
@@ -316,7 +319,7 @@ S_convert_path_common(const direction_t direction)
 
         /* ptr to either wsrc or src_path under BYTES, so can have common code
          * below */
-        wchar_t *which_src = src_path;
+        wchar_t *which_src = (wchar_t *) src_path;
 
         if (LIKELY(! IN_BYTES)) {    /* Normal case, convert UTF-8 to UTF-16 */
             wlen = PATH_LEN_GUESS;
@@ -325,7 +328,6 @@ S_convert_path_common(const direction_t direction)
         }
         else { /* use bytes; assume already UTF-16 encoded bytestream */
             wlen = sizeof(wchar_t) * (len + PATH_LEN_GUESS);
-            which_src = (wchar_t *) src_path;
         }
 
         if (LIKELY(wlen > 0)) { /* Make sure didn't get an error */
