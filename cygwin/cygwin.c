@@ -287,7 +287,7 @@ XS(XS_Cygwin_win_to_posix_path)
        Size calculation: On overflow let cygwin_conv_path calculate the final size.
      */
     if (isutf8) {
-        int what = absolute_flag ? CCP_WIN_W_TO_POSIX : CCP_WIN_W_TO_POSIX | CCP_RELATIVE;
+        int what = CCP_WIN_W_TO_POSIX | ((absolute_flag) ? 0 : CCP_RELATIVE);
         STRLEN wlen = sizeof(wchar_t)*(len + PATH_LEN_GUESS);
         wchar_t *wpath = (wchar_t *) safemalloc(sizeof(wchar_t)*len);
         wchar_t *wbuf = (wchar_t *) safemalloc(wlen);
@@ -321,7 +321,7 @@ XS(XS_Cygwin_win_to_posix_path)
         safefree(wpath);
         safefree(wbuf);
     } else {
-        int what = absolute_flag ? CCP_WIN_A_TO_POSIX : CCP_WIN_A_TO_POSIX | CCP_RELATIVE;
+        int what = CCP_WIN_A_TO_POSIX | ((absolute_flag) ? 0 : CCP_RELATIVE);
         converted_path = (char *) safemalloc (len + PATH_LEN_GUESS);
         err = cygwin_conv_path(what, src_path, converted_path, len + PATH_LEN_GUESS);
         if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
@@ -376,7 +376,7 @@ XS(XS_Cygwin_posix_to_win_path)
        Size calculation: On overflow let cygwin_conv_path calculate the final size.
      */
     if (isutf8) {
-        int what = absolute_flag ? CCP_POSIX_TO_WIN_W : CCP_POSIX_TO_WIN_W | CCP_RELATIVE;
+        int what = CCP_POSIX_TO_WIN_W | ((absolute_flag) ? 0 : CCP_RELATIVE);
         int wlen = sizeof(wchar_t)*(len + PATH_LEN_GUESS);
         wchar_t *wpath = (wchar_t *) safemalloc(sizeof(wchar_t)*len);
         wchar_t *wbuf = (wchar_t *) safemalloc(wlen);
@@ -413,7 +413,7 @@ XS(XS_Cygwin_posix_to_win_path)
         safefree(wpath);
         safefree(wbuf);
     } else {
-        int what = absolute_flag ? CCP_POSIX_TO_WIN_A : CCP_POSIX_TO_WIN_A | CCP_RELATIVE;
+        int what = CCP_POSIX_TO_WIN_A | ((absolute_flag) ? 0 : CCP_RELATIVE);
         converted_path = (char *) safemalloc(len + PATH_LEN_GUESS);
         err = cygwin_conv_path(what, src_path, converted_path, len + PATH_LEN_GUESS);
         if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
