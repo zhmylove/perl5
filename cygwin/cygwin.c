@@ -278,9 +278,8 @@ typedef enum {
 } direction_t;
 
 static void
-S_convert_path_common(const direction_t direction)
+S_convert_path_common(pTHX_ const direction_t direction)
 {
-    dTHX;
     dXSARGS;
     bool absolute_flag = 0;
     STRLEN len;
@@ -401,12 +400,12 @@ S_convert_path_common(const direction_t direction)
 
 XS(XS_Cygwin_win_to_posix_path)
 {
-    S_convert_path_common(to_posix);
+    S_convert_path_common(aTHX_ to_posix);
 }
 
 XS(XS_Cygwin_posix_to_win_path)
 {
-    S_convert_path_common(to_win);
+    S_convert_path_common(aTHX_ to_win);
 }
 
 XS(XS_Cygwin_mount_table)

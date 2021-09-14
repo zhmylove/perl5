@@ -2583,32 +2583,24 @@ Perl_bytes_to_utf8(pTHX_ const U8 *s, STRLEN *lenp)
  * little-endian,
  *
  * 'p' is the UTF-16 input string, passed as a pointer to U8.
- * 'bytelen' is its length (must be a multiple of sizeof(wchar_t)/)
+ *     'bytelen' is its length.
  * 'd' is the pointer to the destination buffer.  The caller must ensure that
  *     the space is large enough.  The maximum expansion factor is 2 times
  *     'bytelen'.  1.5 if never going to run on an EBCDIC box.
- *     (This is because code points 0..0xFFFF are represented by a single
- *     wchar_t character, which is at least two bytes.  Above this requires two
- *     wchar_t characters.  All UTF-8 in this range requires at most 3 bytes;
- *     some UTF-EBCDIC requires 4.  If wchar_t is 4 or more bytes long, then
- *     converting to UTF-8 will not expand, likely it will shrink; If it is 3
- *     bytes, there is no expansion on UTF-8; some on EBCDIC where thr 4-byte
- *     UTF-8 could be represented by a single 3-byte UTF-16.  But the worst
- *     case expansion is wchar_t being 2 bytes, where the two byte UTF-16
- *     representation of 0xFFFF requires three UTF-8 bytes (1.5x), and four
- *     UTF-EBCDIC bytes (2x).)
  * '*newlen' will contain the number of bytes this function filled of 'd'.
  * 'high_byte' is 0 if UTF-16BE; 1 if UTF-16LE
  * 'low_byte' is 1  if UTF-16BE; 0 if UTF-16LE
  *
- * The expansion factor is because UTF-16 requires sizeof(wchar_t XXX) bytes for every code point
- * below 0x10000; otherwise 4 bytes.  UTF-8 requires 1-3 bytes for every code
- * point below 0x1000; otherwise 4 bytes.  UTF-EBCDIC requires 1-4 bytes for
- * every code point below 0x1000; otherwise 4-5 bytes.
- *
- * The worst case is where every code point is below U+10000, hence requiring 2
- * UTF-16 bytes, but is U+0800 or higher on ASCII platforms, requiring 3 UTF-8
- * bytes; or >= U+4000 on EBCDIC requiring 4 UTF-8 bytes.
+ * The expansion factor is because UTF-16 requires 2 bytes for
+ * every code point below 0x10000; otherwise twice that.  UTF-8 requires 1-3
+ * bytes for every code point below 0x1000; otherwise 4 bytes for everything up
+ * to the Unicode max.  UTF-EBCDIC requires 1-4 bytes for below 0x1000; 5 bytes
+ * max for the Unicode range.  wchar_t is likely to be 2 bytes long, but it
+ * could be maybe even 8.  At the upper range, UTF-8 will occupy less space
+ * than UTF-16.  The worst case for expansion is for 2-byte wchar_t.  That
+ * leads to 4 bytes for 1000 and above, same as UTF-8, and 4/5 of high
+ * UTF-EBCDIC.  But the worst case is for near 0xFFFF, where UTF-8 is 3 bytes;
+ * UTF-EBCDIC is 4, and UTF-16 is 2 yielding 1.5x for UTF-8, 2x for EBCDIC; 
  *
  * Do not use in-place. */
 
@@ -2634,7 +2626,7 @@ Perl_utf16_to_utf8_base(pTHX_ U8* p, U8* d, Size_t bytelen, Size_t *newlen,
          * platforms where a bool is implemented as a signed char, a compiler
          * warning may be generated) */
         U32 uv = (p[(U8) high_byte] << 8) + p[(U8) low_byte];
-        p += sizeof(wchar_t);
+        p += 2;
 
         /* If it's a surrogate, we find the uv that the surrogate pair encodes.
          * */
@@ -2657,7 +2649,7 @@ Perl_utf16_to_utf8_base(pTHX_ U8* p, U8* d, Size_t bytelen, Size_t *newlen,
                     Perl_croak(aTHX_ "Malformed UTF-16 surrogate");
                 }
 
-                p += sizeof(wchar_t);
+                p += 2;
 
                 /* Here uv is the high surrogate.  Combine with low surrogate
                  * just computed to form the actual U32 code point.
@@ -2700,8 +2692,8 @@ Perl_utf16_to_utf8_reversed(pTHX_ U8* p, U8* d, Size_t bytelen, Size_t *newlen)
  * 'bytelen' is its length
  * 'd' is the pointer to the destination buffer, currently passed as U8 *.  The
  *     caller must ensure that the space is large enough.  The maximum
- *     expansion factor is sizeof(wchar_t) times 'bytelen'.  This happens when
- *     the input is entirely single-byte ASCII, expanding to multi-byte UTF-16.
+ *     expansion factor is 2 times 'bytelen'.  This happens when the input is
+ *     entirely single-byte ASCII, expanding to multi-byte UTF-16.
  * '*newlen' will contain the number of bytes this function filled of 'd'.
  * 'high_byte' is 0 if UTF-16BE; 1 if UTF-16LE
  * 'low_byte'  is 1 if UTF-16BE; 0 if UTF-16LE
@@ -2743,7 +2735,7 @@ Perl_utf8_to_utf16_base(pTHX_ U8* s, U8* d, Size_t bytelen, Size_t *newlen,
              * generated) */
             d[(U8) high_byte] = high_surrogate >> 8;
             d[(U8) low_byte]  = high_surrogate & nBIT_MASK(8);
-            d += sizeof(wchar_t);
+            d += 2;
 
             /* The low surrogate is the lower 10 bits plus the offset */
             uv &= nBIT_MASK(10);
@@ -2755,7 +2747,7 @@ Perl_utf8_to_utf16_base(pTHX_ U8* s, U8* d, Size_t bytelen, Size_t *newlen,
 
         d[(U8) high_byte] = uv >> 8;
         d[(U8) low_byte] = uv & nBIT_MASK(8);
-        d += sizeof(wchar_t);
+        d += 2;
 
         s += retlen;
     }
