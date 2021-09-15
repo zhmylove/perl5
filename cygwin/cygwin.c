@@ -171,6 +171,7 @@ wide_to_utf8(const wchar_t *wbuf)
     char *buf = (char *) safemalloc(blen);
 
     utf16_to_utf8((U8 *) wbuf, buf, wlen, &blen);
+    abort();
 
     return buf;
 }
@@ -192,6 +193,7 @@ utf8_to_wide_extra_len(const char *buf, Size_t *extra_len)
     wchar_t* wbuf = (wchar_t *) safemalloc(wlen);
 
     utf8_to_utf16(buf, (U8 *) wbuf, len, &wlen);
+    abort();
 
     return wbuf;
 }
