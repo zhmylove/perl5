@@ -106,50 +106,21 @@ already-built-in ones return pointers to what their names indicate.
 #define MUTABLE_IO(p)	((IO *)MUTABLE_PTR(p))
 #define MUTABLE_SV(p)	((SV *)MUTABLE_PTR(p))
 
-#if defined(I_STDBOOL) && !defined(PERL_BOOL_AS_CHAR)
-#  include <stdbool.h>
-#  ifndef HAS_BOOL
-#    define HAS_BOOL 1
-#  endif
-#endif
-
-/* bool is built-in for g++-2.6.3 and later, which might be used
-   for extensions.  <_G_config.h> defines _G_HAVE_BOOL, but we can't
-   be sure _G_config.h will be included before this file.  _G_config.h
-   also defines _G_HAVE_BOOL for both gcc and g++, but only g++
-   actually has bool.  Hence, _G_HAVE_BOOL is pretty useless for us.
-   g++ can be identified by __GNUG__.
-   Andy Dougherty	February 2000
-*/
-#ifdef __GNUG__		/* GNU g++ has bool built-in */
-# ifndef PERL_BOOL_AS_CHAR
-#  ifndef HAS_BOOL
-#    define HAS_BOOL 1
-#  endif
-# endif
-#endif
-
-#ifndef HAS_BOOL
-# ifdef bool
-#  undef bool
-# endif
-# define bool char
-# define HAS_BOOL 1
-#endif
+#include <stdbool.h>
 
 /*
 =for apidoc_section $casting
 =for apidoc Am|bool|cBOOL|bool expr
 
-Cast-to-bool.  A simple S<C<(bool) I<expr>>> cast may not do the right thing:
-if C<bool> is defined as C<char>, for example, then the cast from C<int> is
-implementation-defined.
-
-C<(bool)!!(cbool)> in a ternary triggers a bug in xlc on AIX
+Cast-to-bool.  When Perl was able to be compiled on pre-C99 compilers, a
+C<(bool)> cast didn't necessarily do the right thing, so this macro was
+created (and made somewhat complicated to work around bugs in old
+compilers).  Now, many years later, and C99 is used, this is no longer
+required, but is kept for backwards compatibility.
 
 =cut
 */
-#define cBOOL(cbool) ((cbool) ? (bool)1 : (bool)0)
+#define cBOOL(cbool) ((bool) (cbool))
 
 /* Try to figure out __func__ or __FUNCTION__ equivalent, if any.
  * XXX Should really be a Configure probe, with HAS__FUNCTION__
