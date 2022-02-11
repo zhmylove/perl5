@@ -2029,9 +2029,7 @@ ERS	|SV*	|make_exactf_invlist	|NN RExC_state_t *pRExC_state \
 ES	|regnode_offset|reg	|NN RExC_state_t *pRExC_state \
 				|I32 paren|NN I32 *flagp|U32 depth
 ES	|regnode_offset|regnode_guts|NN RExC_state_t *pRExC_state          \
-				|const U8 op				   \
-				|const STRLEN extra_len			   \
-				|NN const char* const name
+				|const STRLEN extra_len
 ES	|void	|change_engine_size|NN RExC_state_t *pRExC_state|const Ptrdiff_t size
 ES	|regnode_offset|reganode|NN RExC_state_t *pRExC_state|U8 op \
 				|U32 arg
@@ -2108,13 +2106,12 @@ ES	|void|add_above_Latin1_folds|NN RExC_state_t *pRExC_state|const U8 cp \
 				|NN SV** invlist
 ES	|regnode_offset|handle_named_backref|NN RExC_state_t *pRExC_state   \
 				|NN I32 *flagp				    \
-				|NN char * parse_start			    \
+				|NN char * backref_parse_start		    \
 				|char ch
 ESTR	|unsigned int|regex_set_precedence|const U8 my_operator
 ES	|regnode_offset|handle_regex_sets|NN RExC_state_t *pRExC_state \
 				|NULLOK SV ** return_invlist            \
-				|NN I32 *flagp|U32 depth                \
-				|NN char * const oregcomp_parse
+				|NN I32 *flagp|U32 depth
 ES	|void	|set_regex_pv	|NN RExC_state_t *pRExC_state|NN REGEXP *Rx
 #  if defined(DEBUGGING) && defined(ENABLE_REGEX_SETS_DEBUGGING)
 ES	|void	|dump_regex_sets_structures				    \

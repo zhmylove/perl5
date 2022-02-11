@@ -1077,7 +1077,7 @@
 #define handle_named_backref(a,b,c,d)	S_handle_named_backref(aTHX_ a,b,c,d)
 #define handle_names_wildcard(a,b,c,d)	S_handle_names_wildcard(aTHX_ a,b,c,d)
 #define handle_possible_posix(a,b,c,d,e)	S_handle_possible_posix(aTHX_ a,b,c,d,e)
-#define handle_regex_sets(a,b,c,d,e)	S_handle_regex_sets(aTHX_ a,b,c,d,e)
+#define handle_regex_sets(a,b,c,d)	S_handle_regex_sets(aTHX_ a,b,c,d)
 #define handle_user_defined_property(a,b,c,d,e,f,g,h,i,j)	S_handle_user_defined_property(aTHX_ a,b,c,d,e,f,g,h,i,j)
 #define invlist_contents(a,b)	S_invlist_contents(aTHX_ a,b)
 #define invlist_is_iterating	S_invlist_is_iterating
@@ -1104,7 +1104,7 @@
 #define regclass(a,b,c,d,e,f,g,h,i)	S_regclass(aTHX_ a,b,c,d,e,f,g,h,i)
 #define regex_set_precedence	S_regex_set_precedence
 #define reginsert(a,b,c,d)	S_reginsert(aTHX_ a,b,c,d)
-#define regnode_guts(a,b,c,d)	S_regnode_guts(aTHX_ a,b,c,d)
+#define regnode_guts(a,b)	S_regnode_guts(aTHX_ a,b)
 #define regpiece(a,b,c)		S_regpiece(aTHX_ a,b,c)
 #define regpnode(a,b,c)		S_regpnode(aTHX_ a,b,c)
 #define regtail(a,b,c,d)	S_regtail(aTHX_ a,b,c,d)

@@ -5877,18 +5877,18 @@ STATIC U32	S_get_quantifier_value(pTHX_ RExC_state_t *pRExC_state, const char * 
 STATIC bool	S_grok_bslash_N(pTHX_ RExC_state_t *pRExC_state, regnode_offset* nodep, UV *code_point_p, int* cp_count, I32 *flagp, const bool strict, const U32 depth);
 #define PERL_ARGS_ASSERT_GROK_BSLASH_N	\
 	assert(pRExC_state); assert(flagp)
-STATIC regnode_offset	S_handle_named_backref(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, char * parse_start, char ch);
+STATIC regnode_offset	S_handle_named_backref(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, char * backref_parse_start, char ch);
 #define PERL_ARGS_ASSERT_HANDLE_NAMED_BACKREF	\
-	assert(pRExC_state); assert(flagp); assert(parse_start)
+	assert(pRExC_state); assert(flagp); assert(backref_parse_start)
 STATIC bool	S_handle_names_wildcard(pTHX_ const char * wname, const STRLEN wname_len, SV ** prop_definition, AV ** strings);
 #define PERL_ARGS_ASSERT_HANDLE_NAMES_WILDCARD	\
 	assert(wname); assert(prop_definition); assert(strings)
 STATIC int	S_handle_possible_posix(pTHX_ RExC_state_t *pRExC_state, const char* const s, char ** updated_parse_ptr, AV** posix_warnings, const bool check_only);
 #define PERL_ARGS_ASSERT_HANDLE_POSSIBLE_POSIX	\
 	assert(pRExC_state); assert(s)
-STATIC regnode_offset	S_handle_regex_sets(pTHX_ RExC_state_t *pRExC_state, SV ** return_invlist, I32 *flagp, U32 depth, char * const oregcomp_parse);
+STATIC regnode_offset	S_handle_regex_sets(pTHX_ RExC_state_t *pRExC_state, SV ** return_invlist, I32 *flagp, U32 depth);
 #define PERL_ARGS_ASSERT_HANDLE_REGEX_SETS	\
-	assert(pRExC_state); assert(flagp); assert(oregcomp_parse)
+	assert(pRExC_state); assert(flagp)
 STATIC SV *	S_handle_user_defined_property(pTHX_ const char * name, const STRLEN name_len, const bool is_utf8, const bool to_fold, const bool runtime, const bool deferrable, SV* contents, bool *user_defined_ptr, SV * msg, const STRLEN level);
 #define PERL_ARGS_ASSERT_HANDLE_USER_DEFINED_PROPERTY	\
 	assert(name); assert(contents); assert(user_defined_ptr); assert(msg)
@@ -5990,9 +5990,9 @@ STATIC unsigned int	S_regex_set_precedence(const U8 my_operator)
 STATIC void	S_reginsert(pTHX_ RExC_state_t *pRExC_state, const U8 op, const regnode_offset operand, const U32 depth);
 #define PERL_ARGS_ASSERT_REGINSERT	\
 	assert(pRExC_state)
-STATIC regnode_offset	S_regnode_guts(pTHX_ RExC_state_t *pRExC_state, const U8 op, const STRLEN extra_len, const char* const name);
+STATIC regnode_offset	S_regnode_guts(pTHX_ RExC_state_t *pRExC_state, const STRLEN extra_len);
 #define PERL_ARGS_ASSERT_REGNODE_GUTS	\
-	assert(pRExC_state); assert(name)
+	assert(pRExC_state)
 STATIC regnode_offset	S_regpiece(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth);
 #define PERL_ARGS_ASSERT_REGPIECE	\
 	assert(pRExC_state); assert(flagp)
