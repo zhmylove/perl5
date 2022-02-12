@@ -71,7 +71,7 @@ typedef struct regexp_internal {
                                    strictly reserved for internal purposes. */
         struct reg_code_blocks *code_blocks;/* positions of literal (?{}) */
         U32 proglen;            /* size of the compiled program in regnodes */
-        int name_list_idx;        /* Optional data index of an array of paren names */
+        U32 name_list_idx;        /* Optional data index of an array of paren names */
         regnode program[1];	/* Unwarranted chumminess with compiler. */
 } regexp_internal;
 
