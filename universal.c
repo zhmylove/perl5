@@ -434,6 +434,27 @@ XS(XS_UNIVERSAL_isa)
     }
 }
 
+XS(XS_UNIVERSAL_import_unimport); /* prototype to pass -Wmissing-prototypes */
+XS(XS_UNIVERSAL_import_unimport)
+{
+    dXSARGS;
+    dXSI32;
+
+    if (items > 1) {
+        char *class_pv= SvPV_nolen(ST(0));
+        /* _charnames is special - ignore it for now */
+        if (strEQ(class_pv,"UNIVERSAL"))
+            Perl_croak(aTHX_ "UNIVERSAL does not export anything");
+        if (strNE(class_pv,"_charnames"))
+            Perl_croak(aTHX_ "Attempt to call UNIVERSAL::%s() with arguments"
+                             " via package %s (Perhaps you forgot to"
+                             " load \"%s\"?)",
+                    ix ? "unimport" : "import", class_pv, class_pv);
+    }
+    XSRETURN_EMPTY;
+}
+
+
 XS(XS_UNIVERSAL_can); /* prototype to pass -Wmissing-prototypes */
 XS(XS_UNIVERSAL_can)
 {
@@ -1253,6 +1274,8 @@ static const struct xsub_details these_details[] = {
     {"UNIVERSAL::isa", XS_UNIVERSAL_isa, NULL, 0 },
     {"UNIVERSAL::can", XS_UNIVERSAL_can, NULL, 0 },
     {"UNIVERSAL::DOES", XS_UNIVERSAL_DOES, NULL, 0 },
+    {"UNIVERSAL::import", XS_UNIVERSAL_import_unimport, NULL, 0},
+    {"UNIVERSAL::unimport", XS_UNIVERSAL_import_unimport, NULL, 1},
 #define VXS_XSUB_DETAILS
 #include "vxs.inc"
 #undef VXS_XSUB_DETAILS
