@@ -2163,6 +2163,7 @@ my sub g {
     sub f { }
 }
 ####
+# TODO only partially fixed
 # lexical state subroutine with outer declaration and inner definition
 # CONTEXT use feature 'lexical_subs', 'state'; no warnings 'experimental::lexical_subs';
 ();
