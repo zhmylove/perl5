@@ -1289,81 +1289,14 @@ EOF
       # should be generated, due to a non-void CODE-less XSUB.
       # ----------------------------------------------------------------
 
-      if (   $self->{xsub_seen_RETVAL_in_OUTPUT}
-          && $self->{xsub_RETVAL_typemap_code})
-      {
-        # Deferred RETVAL with overridden typemap code. Just emit as-is.
-        print "\t$self->{xsub_RETVAL_typemap_code}\n";
-        print "\t++SP;\n" if $outlist_count;
-      }
-      elsif ($self->{xsub_seen_RETVAL_in_OUTPUT} || $implicit_OUTPUT_RETVAL) {
-        # Deferred or implicit RETVAL with standard typemap
-
-        # Examine the typemap entry to determine whether it's possible
-        # to optimise the return code by using the OP_ENTERSUB's targ (if
-        # any) rather than creating a new mortal each time.
-        # The targetable() Typemap method looks at whether the typemap
-        # is of the form sv_setX($arg, $val) or similar, for X in iv ,uv,
-        # nv, pv, pvn.
-        # Note that we did the same lookup earlier to determine whether to
-        # emit dXSTARG, a macro which expands to something like:
-        #
-        #   SV * targ = (PL_op->op_private & OPpENTERSUB_HASTARG)
-        #               ? PAD_SV(PL_op->op_targ) : sv_newmortal()
-
-        my $outputmap = $self->{typemaps_object}->get_outputmap( ctype => $self->{xsub_return_type} );
-        my $target = $self->{config_optimize} && $outputmap && $outputmap->targetable;
-        my $var = 'RETVAL';
-        my $type = $self->{xsub_return_type};
-
-        if ($target) {
-          # Emit targ optimisation: basically, emit a PUSHi() or whatever,
-          # which will set TARG to the value and push it.
-
-          # $target->{what} is something like '(IV)$var': the part of the
-          # typemap which contains the value the TARG should be set to.
-          # Expand it via eval.
-          my $what = $self->eval_output_typemap_code(
-            qq("$target->{what}"),
-            {var => $var, type => $self->{xsub_return_type}}
-          );
-
-          if (not $target->{with_size} and $target->{type} eq 'p') {
-              # Handle sv_setpv() manually. (sv_setpvn() is handled
-              # by the generic code below, via PUSHp().)
-              print "\tsv_setpv(TARG, $what);\n";
-              print "\tXSprePUSH;\n" unless $outlist_count;
-              print "\tPUSHTARG;\n";
-          }
-          else {
-            # Emit PUSHx() for generic sv_set_xv()
-
-            # $tsize is the third arg of the sv_setpvn() in the typemap
-            # (or empty otherwise), including comma, e.g. ', sizeof($var)'.
-            # Eval it so that the result can be passed as the 2nd arg to
-            # PUSHp().
-            # XXX this could be skipped if $tsize is empty
-            my $tsize = $target->{what_size};
-            $tsize = '' unless defined $tsize;
-            $tsize = $self->eval_output_typemap_code(
-              qq("$tsize"),
-              {var => $var, type => $self->{xsub_return_type}}
-            );
-
-            print "\tXSprePUSH;\n" unless $outlist_count;
-            print "\tPUSH$target->{type}($what$tsize);\n";
-          }
-        }
-        else {
-          # Emit a normal RETVAL
-          $self->generate_output( {
+      if ($self->{xsub_seen_RETVAL_in_OUTPUT} || $implicit_OUTPUT_RETVAL) {
+        # emit a deferred RETVAL from OUTPUT or implicit RETVAL
+        $self->generate_output( {
             num         => 0,
             var         => 'RETVAL',
             do_setmagic => 0,   # RETVAL almost never needs SvSETMAGIC()
             do_push     => undef,
           } );
-          print "\t++SP;\n" if $outlist_count;
-        }
       }
 
       $XSRETURN_count = 1 if $self->{xsub_return_type} ne "void";
@@ -3355,6 +3288,80 @@ sub generate_output {
   elsif ($var eq 'RETVAL') {
     # If the var is called RETVAL, then we return its value on the
     # stack
+
+    # If there are any OUTLIST variables then we've already emitted
+    # the "XSprePUSH".
+    my $outlist_count = grep {    defined $_->{in_out}
+                               && $_->{in_out} =~ /OUTLIST$/
+                             }
+                             @{$self->{xsub_sig}{params}};
+
+    if ($self->{xsub_RETVAL_typemap_code}) {
+      # Deferred RETVAL with overridden typemap code. Just emit as-is.
+      print "\t$self->{xsub_RETVAL_typemap_code}\n";
+      print "\t++SP;\n" if $outlist_count;
+      return;
+    }
+
+    # Examine the typemap entry to determine whether it's possible
+    # to optimise the return code by using the OP_ENTERSUB's targ (if
+    # any) rather than creating a new mortal each time.
+    # The targetable() Typemap method looks at whether the typemap
+    # is of the form sv_setX($arg, $val) or similar, for X in iv ,uv,
+    # nv, pv, pvn.
+    # Note that we did the same lookup earlier to determine whether to
+    # emit dXSTARG, a macro which expands to something like:
+    #
+    #   SV * targ = (PL_op->op_private & OPpENTERSUB_HASTARG)
+    #               ? PAD_SV(PL_op->op_targ) : sv_newmortal()
+
+    my $outputmap = $self->{typemaps_object}->get_outputmap( ctype => $self->{xsub_return_type} );
+    my $target = $self->{config_optimize} && $outputmap && $outputmap->targetable;
+    my $var = 'RETVAL';
+    my $type = $self->{xsub_return_type};
+
+    if ($target) {
+      # Emit targ optimisation: basically, emit a PUSHi() or whatever,
+      # which will set TARG to the value and push it.
+
+      # $target->{what} is something like '(IV)$var': the part of the
+      # typemap which contains the value the TARG should be set to.
+      # Expand it via eval.
+      my $what = $self->eval_output_typemap_code(
+        qq("$target->{what}"),
+        {var => $var, type => $self->{xsub_return_type}}
+      );
+
+      if (not $target->{with_size} and $target->{type} eq 'p') {
+          # Handle sv_setpv() manually. (sv_setpvn() is handled
+          # by the generic code below, via PUSHp().)
+          print "\tsv_setpv(TARG, $what);\n";
+          print "\tXSprePUSH;\n" unless $outlist_count;
+          print "\tPUSHTARG;\n";
+      }
+      else {
+        # Emit PUSHx() for generic sv_set_xv()
+
+        # $tsize is the third arg of the sv_setpvn() in the typemap
+        # (or empty otherwise), including comma, e.g. ', sizeof($var)'.
+        # Eval it so that the result can be passed as the 2nd arg to
+        # PUSHp().
+        # XXX this could be skipped if $tsize is empty
+        my $tsize = $target->{what_size};
+        $tsize = '' unless defined $tsize;
+        $tsize = $self->eval_output_typemap_code(
+          qq("$tsize"),
+          {var => $var, type => $self->{xsub_return_type}}
+        );
+
+        print "\tXSprePUSH;\n" unless $outlist_count;
+        print "\tPUSH$target->{type}($what$tsize);\n";
+      }
+      return;
+    }
+
+    # emit a standard RETVAL return
+
     my $orig_arg = $arg;
     my @lines;           # lines of code to eventually emit
     my $use_RETVALSV = 1;
@@ -3522,6 +3529,7 @@ sub generate_output {
     }
 
     print @lines;
+    print "\t++SP;\n" if $outlist_count;
   }
 
   elsif ($do_push) {
