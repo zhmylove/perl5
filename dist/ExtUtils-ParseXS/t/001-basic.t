@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 182;
+use Test::More tests => 222;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1637,4 +1637,158 @@ EOF
     );
 
     test_many($preamble, 'boot_Foo', \@test_fns);
+}
+
+{
+    # Test RETVAL with the dXSTARG optimisation. When the return type
+    # corresponds to a simple sv_setXv($arg, $val) in the typemap,
+    # use the OP_ENTERSUB's TARG if possible, rather than creating a new
+    # mortal each time.
+
+    my $preamble = Q(<<'EOF');
+        |MODULE = Foo PACKAGE = Foo
+        |
+        |PROTOTYPES:  DISABLE
+        |
+        |TYPEMAP: <<EOF
+        |const int     T_IV
+        |const long    T_MYIV
+        |
+        |INPUT
+        |T_MYIV
+        |    $var = ($type)SvIV($arg)
+        |
+        |OUTPUT
+        |T_OBJECT
+        |    sv_setiv($arg, (IV)$var);
+        |EOF
+EOF
+
+    my @test_fns = (
+        [
+            "dXSTARG int (IV)",
+            [
+                'int',
+                'foo()',
+            ],
+            [ 0, 0, qr/\bdXSTARG;/,   "has targ def" ],
+            [ 0, 0, qr/\bPUSHi\b/,    "has PUSHi" ],
+            [ 0, 1, qr/sv_newmortal/, "doesn't have newmortal" ],
+        ],
+
+        [
+            # same as int, but via custom typemap entry
+            "dXSTARG const int (IV)",
+            [
+                'const int',
+                'foo()',
+            ],
+            [ 0, 0, qr/\bdXSTARG;/,   "has targ def" ],
+            [ 0, 0, qr/\bPUSHi\b/,    "has PUSHi" ],
+            [ 0, 1, qr/sv_newmortal/, "doesn't have newmortal" ],
+        ],
+
+        [
+            # same as int, but via custom typemap OUTPUT entry
+            "dXSTARG const long (MYIV)",
+            [
+                'const int',
+                'foo()',
+            ],
+            [ 0, 0, qr/\bdXSTARG;/,   "has targ def" ],
+            [ 0, 0, qr/\bPUSHi\b/,    "has PUSHi" ],
+            [ 0, 1, qr/sv_newmortal/, "doesn't have newmortal" ],
+        ],
+
+        [
+            "dXSTARG unsigned long (UV)",
+            [
+                'unsigned long',
+                'foo()',
+            ],
+            [ 0, 0, qr/\bdXSTARG;/,   "has targ def" ],
+            [ 0, 0, qr/\bPUSHu\b/,    "has PUSHu" ],
+            [ 0, 1, qr/sv_newmortal/, "doesn't have newmortal" ],
+        ],
+
+        [
+            "dXSTARG time_t (NV)",
+            [
+                'time_t',
+                'foo()',
+            ],
+            [ 0, 0, qr/\bdXSTARG;/,   "has targ def" ],
+            [ 0, 0, qr/\bPUSHn\b/,    "has PUSHn" ],
+            [ 0, 1, qr/sv_newmortal/, "doesn't have newmortal" ],
+        ],
+
+        [
+            "dXSTARG char (pvn)",
+            [
+                'char',
+                'foo()',
+            ],
+            [ 0, 0, qr/\bdXSTARG;/,   "has targ def" ],
+            [ 0, 0, qr/\bPUSHp\b/,    "has PUSHp" ],
+            [ 0, 1, qr/sv_newmortal/, "doesn't have newmortal" ],
+        ],
+
+        [
+            "dXSTARG char * (PV)",
+            [
+                'char *',
+                'foo()',
+            ],
+            [ 0, 0, qr/\bdXSTARG;/,   "has targ def" ],
+            [ 0, 0, qr/\bsv_setpv\b/, "has sv_setpv" ],
+            [ 0, 0, qr/\bPUSHTARG\b/, "has PUSHTARG" ],
+            [ 0, 1, qr/sv_newmortal/, "doesn't have newmortal" ],
+        ],
+
+        [
+            "dXSTARG int (IV) with outlist",
+            [
+                'int',
+                'foo(OUTLIST int a, OUTLIST int b)',
+            ],
+            [ 0, 0, qr/\bdXSTARG;/,      "has targ def" ],
+            [ 0, 0, qr/\bXSprePUSH;/,    "has XSprePUSH" ],
+            [ 0, 1, qr/\bXSprePUSH\b.*\bXSprePUSH\b*/s,
+                                         "has only one XSprePUSH" ],
+
+            [ 0, 0, qr/\bPUSHi\b/,       "has PUSHi" ],
+            [ 0, 0, qr/\bPUSHs\b.*\bPUSHs\b*/s,
+                                         "has two PUSHs" ],
+
+            [ 0, 0, qr/\bXSRETURN\(3\)/, "has XSRETURN(3)" ],
+        ],
+
+        # Test RETVAL with an overridden typemap template in OUTPUT
+        [
+            "RETVAL overridden typemap: non-TARGable",
+            [
+                'int',
+                'foo()',
+                '    OUTPUT:',
+                '        RETVAL my_sv_setiv(ST(0), RETVAL);',
+            ],
+            [ 0, 0, qr/\bmy_sv_setiv\b/,   "has my_sv_setiv" ],
+        ],
+
+        [
+            "RETVAL overridden typemap: TARGable",
+            [
+                'int',
+                'foo()',
+                '    OUTPUT:',
+                '        RETVAL sv_setiv(ST(0), RETVAL);',
+            ],
+            # XXX currently the TARG optimisation isn't done
+            # XXX when this is fixed, update the test
+            [ 0, 0, qr/\bsv_setiv\b/,   "has sv_setiv" ],
+        ],
+
+    );
+
+    test_many($preamble, 'XS_Foo_', \@test_fns);
 }
