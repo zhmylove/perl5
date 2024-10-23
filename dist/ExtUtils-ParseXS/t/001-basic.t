@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 250;
+use Test::More tests => 252;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1461,7 +1461,9 @@ EOF
             [ 0, 0, qr/\Qfoo(A, &B, &C, &D, &E)/,      "autocall" ],
 
             [ 0, 0, qr/sv_setiv.*ST\(1\).*\bB\b/,      "set B"    ],
+            [ 0, 0, qr/\QSvSETMAGIC(ST(1))/,           "set magic B" ],
             [ 0, 0, qr/sv_setiv.*ST\(2\).*\bC\b/,      "set C"    ],
+            [ 0, 0, qr/\QSvSETMAGIC(ST(2))/,           "set magic C" ],
 
             [ 0, 0, qr/\QEXTEND(SP,2)/,                "extend"   ],
 

@@ -1251,14 +1251,7 @@ EOF
               }
               @{ $self->{xsub_sig}{params}})
       {
-        my $var = $param->{var};
-        $self->generate_output( {
-            num         => $param->{arg_num},
-            var         => $var,
-            do_setmagic => $self->{xsub_SETMAGIC_state},
-            do_push     => undef,
-          }
-        );
+        $self->generate_output($param);
       }
 
       # If there are any OUTLIST vars to be pushed, first extend the
@@ -1286,12 +1279,14 @@ EOF
 
       if ($self->{xsub_seen_RETVAL_in_OUTPUT} || $implicit_OUTPUT_RETVAL) {
         # emit a deferred RETVAL from OUTPUT or implicit RETVAL
-        $self->generate_output( {
-            num         => 0,
+        my ExtUtils::ParseXS::Node::Param $param =
+          ExtUtils::ParseXS::Node::Param->new( {
             var         => 'RETVAL',
+            arg_num     => 1,
+            type        => $self->{xsub_return_type},
             do_setmagic => 0,   # RETVAL almost never needs SvSETMAGIC()
-            do_push     => undef,
           } );
+        $self->generate_output($param);
       }
 
       $XSRETURN_count = 1 if $self->{xsub_return_type} ne "void";
@@ -1304,15 +1299,7 @@ EOF
                            }
                            @{$self->{xsub_sig}{params}}
       ) {
-        my $var = $param->{var};
-        $self->generate_output(
-          {
-            num         => $num++,
-            var         => $var,
-            do_setmagic => 0,
-            do_push     => 1,
-          }
-        );
+        $self->generate_output($param, $num++);
       }
 
 
@@ -2198,12 +2185,7 @@ sub OUTPUT_handler {
         if $self->{xsub_SETMAGIC_state};
     }
     else {
-      $self->generate_output( {
-        num         => $var_num,
-        var         => $outarg,
-        do_setmagic => $self->{xsub_SETMAGIC_state},
-        do_push     => undef,
-      } );
+      $self->generate_output($param);
     }
   } # foreach line in OUTPUT block
 }
@@ -3133,15 +3115,13 @@ sub fetch_para {
 }
 
 
-# $self->generate_output({ key = value, ... })
-#
-#   num         the parameter number, corresponds to ST(num-1)
-#   var         the parameter name, such as 'RETVAL'
-#   do_setmagic whether to call set magic after assignment
-#   do_push     whether to push a new mortal onto the stack
+# $self->generate_output($param[, $out_num])
 #
 # Emit code to: possibly create, then set the value of, and possibly
-# push, an output SV.
+# push, an output SV, based on $param.
+#
+# $out_num is optional and only has meaning when an OUTLIST var is
+# being pushed - it indicates the position on the stack of that push.
 #
 # This function emits code such as "sv_setiv(ST(0), (IV)foo)", based on the
 # typemap OUTPUT entry associated with $type, passing the typemap code
@@ -3170,35 +3150,23 @@ sub fetch_para {
 # So we examine the typemap *after* evaluation to determine whether it's
 # of the form '$arg = ' or not.
 #
-# Finally, note that do_push is true when processing an OUTLIST arg.
-#
 # This function sometimes emits a C variable called RETVALSV. This is
 # private and shouldn't be referenced within XS code or typemaps.
 
 sub generate_output {
   my ExtUtils::ParseXS $self = shift;
-  my $argsref = shift;
-  my ($num, $var, $do_setmagic, $do_push)
-    = @{$argsref}{qw(num var do_setmagic do_push)};
+  my ExtUtils::ParseXS::Node::Param $param = shift;
+  my $out_num = shift;
 
-  # Determine type - this is usually from the 'type' field of the
-  # associated param object in the Sig object, but with special cases.
-  my $type;
-  if ($var eq 'RETVAL') {
-    $type = $self->{xsub_return_type};
-  }
-  else {
-    my $sig = $self->{xsub_sig};
-    my $param = $sig->{names}{$var};
-    if ($param) {
-      $type = $param->{type};
-    }
-  }
+  my ($type, $num, $var, $do_setmagic)
+    = @{$param}{qw(type arg_num var do_setmagic)};
 
   unless (defined $type) {
     $self->blurt("Can't determine output type for '$var'");
     return;
   }
+
+  my $do_push = defined($param->{in_out}) && $param->{in_out} =~ /OUTLIST$/;
 
   my $arg = $self->ST($num, 1);
 
@@ -3247,8 +3215,15 @@ sub generate_output {
   $type =~ tr/:/_/ unless $self->{config_RetainCplusplusHierarchicalTypes};
 
   # Specify the environment for when the typemap template is evalled.
-  my $eval_vars = {%$argsref, subtype => $subtype,
-                    ntype => $ntype, arg => $arg, type => $type };
+  my $eval_vars = {
+                    num         => $num,
+                    var         => $var,
+                    do_setmagic => $do_setmagic,
+                    subtype     => $subtype,
+                    ntype       => $ntype,
+                    arg         => $arg,
+                    type        => $type,
+                  };
 
   # Get the text of the typemap template, with a few transformations to
   # make it work better with fussy C compilers. In particular, strip
@@ -3537,7 +3512,7 @@ sub generate_output {
     # $do_push indicates that this is an OUTLIST value, so an SV with
     # the value should be pushed onto the stack
     print "\tPUSHs(sv_newmortal());\n";
-    $eval_vars->{arg} = $self->ST($num+1, 1);
+    $eval_vars->{arg} = $self->ST($out_num + 1, 1);
     print $self->eval_output_typemap_code("qq\a$expr\a", $eval_vars);
     print "\tSvSETMAGIC($arg);\n" if $do_setmagic;
   }
@@ -3557,7 +3532,11 @@ sub generate_output {
     #  which means that if we hit this branch, $evalexpr will have been
     #  expanded to something like sv_setsv(ST(2), boolSV(foo))
     print $self->eval_output_typemap_code("qq\a$expr\a", $eval_vars);
-    print "\tSvSETMAGIC($arg);\n" if $do_setmagic;
+
+    # For parameters in the OUTPUT section, honour the SETMAGIC in force
+    # at the time. For parameters instead being output because of an OUT
+    # keyword in the signature, assume set magic always.
+    print "\tSvSETMAGIC($arg);\n" if !$param->{in_output} || $do_setmagic;
   }
 }
 
