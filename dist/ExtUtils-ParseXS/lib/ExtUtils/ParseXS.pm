@@ -2163,17 +2163,14 @@ sub OUTPUT_handler {
     #
     my ($outarg, $outcode) = /^\s*(\S+)\s*(.*?)\s*$/s;
 
-    $self->blurt("Error: duplicate OUTPUT parameter '$outarg' ignored"), next
-      if $self->{xsub_map_varname_to_seen_in_OUTPUT}->{$outarg}++;
+    if ($self->{xsub_map_varname_to_seen_in_OUTPUT}->{$outarg}++) {
+      $self->blurt("Error: duplicate OUTPUT parameter '$outarg' ignored");
+      next;
+    }
 
-    if (!$self->{xsub_seen_RETVAL_in_OUTPUT} and $outarg eq 'RETVAL') {
+    if ($outarg eq 'RETVAL') {
       # Postpone processing the RETVAL line to last (it's left to the
       # caller to finish).
-      # XXX The !$self->{xsub_seen_RETVAL_in_OUTPUT} test means that if
-      # there are
-      # Duplicate RETVAL lines, then as well as blurt()ing above, the
-      # subsequent lines are processed as normal vars too. This
-      # doesn't seem useful.
       $self->{xsub_RETVAL_typemap_code} = $outcode;
       $self->{xsub_seen_RETVAL_in_OUTPUT} = 1;
       next;
