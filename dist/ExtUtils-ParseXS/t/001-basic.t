@@ -1915,8 +1915,7 @@ EOF
                 |    OUTPUT:
                 |      aaa
 EOF
-            # XXX this doesn't warn yet
-            [ 1, 1, qr/Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section/, "" ],
+            [ 1, 0, qr/Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section/, "" ],
         ],
     );
 

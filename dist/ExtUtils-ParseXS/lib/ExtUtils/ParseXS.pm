@@ -316,8 +316,6 @@ BEGIN {
 
   # Per-XSUB OUTPUT section parsing state:
 
-  'xsub_seen_OUTPUT',          # Bool: have seen an OUTPUT section.
-
   'xsub_SETMAGIC_state',       # Bool: most recent value of SETMAGIC in an
                                # OUTPUT section.
 
@@ -1035,8 +1033,8 @@ EOF
         $param->as_code($self);
       }
 
-      # These are set later if OUTPUT is found and/or CODE using RETVAL
-      $self->{xsub_seen_OUTPUT} = $self->{xsub_seen_RETVAL_in_CODE} = 0;
+      # This set later if CODE is using RETVAL
+      $self->{xsub_seen_RETVAL_in_CODE} = 0;
 
       # $implicit_OUTPUT_RETVAL (bool) indicates that a bodiless XSUB has
       # a non-void return value, so needs to return RETVAL; or to put it
@@ -1142,8 +1140,12 @@ EOF
           # Handle CODE: just emit the code block and check if it
           # includes "RETVAL". This check is for later use to warn if
           # RETVAL is used but no OUTPUT block is present.
+          # Ignore if its only being used in an 'ignore this var'
+          # situation
           my $consumed_code = $self->print_section();
-          if ($consumed_code =~ /\bRETVAL\b/) {
+          if (   $consumed_code =~ /\bRETVAL\b/
+              && $consumed_code !~ /\b\QPERL_UNUSED_VAR(RETVAL)/
+          ) {
             $self->{xsub_seen_RETVAL_in_CODE} = 1;
           }
 
@@ -1239,7 +1241,7 @@ EOF
 
       # A CODE section using RETVAL must also have an OUTPUT entry
       if (        $self->{xsub_seen_RETVAL_in_CODE}
-          and not $self->{xsub_seen_OUTPUT}
+          and not $self->{xsub_seen_RETVAL_in_OUTPUT}
           and     $self->{xsub_return_type} ne 'void')
       {
         $self->Warn("Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section.");
@@ -2142,7 +2144,6 @@ sub INPUT_handler {
 
 sub OUTPUT_handler {
   my ExtUtils::ParseXS $self = shift;
-  $self->{xsub_seen_OUTPUT} = 1;
 
   $_ = shift;
 
