@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 244;
+use Test::More tests => 246;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1892,6 +1892,31 @@ EOF
                 |      aaa
 EOF
             [ 1, 0, qr/Error: duplicate OUTPUT parameter 'aaa'/, "" ],
+        ],
+
+        [
+            "RETVAL in CODE without OUTPUT section",
+            [ Q(<<'EOF') ],
+                |int
+                |foo()
+                |    CODE:
+                |      RETVAL = 99
+EOF
+            [ 1, 0, qr/Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section/, "" ],
+        ],
+
+        [
+            "RETVAL in CODE without being in OUTPUT",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int aaa)
+                |    CODE:
+                |      RETVAL = 99
+                |    OUTPUT:
+                |      aaa
+EOF
+            # XXX this doesn't warn yet
+            [ 1, 1, qr/Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section/, "" ],
         ],
     );
 
