@@ -3166,8 +3166,6 @@ sub generate_output {
     return;
   }
 
-  my $do_push = defined($param->{in_out}) && $param->{in_out} =~ /OUTLIST$/;
-
   my $arg = $self->ST($num, 1);
 
   my $typemaps = $self->{typemaps_object};
@@ -3508,13 +3506,12 @@ sub generate_output {
     print "\t++SP;\n" if $outlist_count;
   }
 
-  elsif ($do_push) {
-    # $do_push indicates that this is an OUTLIST value, so an SV with
-    # the value should be pushed onto the stack
+  elsif (defined $out_num) {
+    # Indicates that this is an OUTLIST value, so an SV with the value
+    # should be pushed onto the stack
     print "\tPUSHs(sv_newmortal());\n";
     $eval_vars->{arg} = $self->ST($out_num + 1, 1);
     print $self->eval_output_typemap_code("qq\a$expr\a", $eval_vars);
-    print "\tSvSETMAGIC($arg);\n" if $do_setmagic;
   }
 
   elsif ($arg =~ /^ST\(\d+\)$/) {

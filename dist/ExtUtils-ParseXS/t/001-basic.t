@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 252;
+use Test::More tests => 264;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1970,6 +1970,37 @@ EOF
                 |      length(aaa)
 EOF
             [ 1, 0, qr/\QError: OUTPUT length(aaa) not a parameter/, "" ],
+        ],
+
+        [
+            "OUTPUT with IN_OUTLIST",
+            [ Q(<<'EOF') ],
+                |char*
+                |foo(IN_OUTLIST int abc)
+                |    CODE:
+                |        RETVAL=999
+                |    OUTPUT:
+                |        RETVAL
+                |        abc
+EOF
+            # OUT var - update arg 0 on stack
+            [ 0, 0, qr/\b\Qsv_setiv(ST(0),\E.*abc/,  "setiv(ST0, abc)" ],
+            [ 0, 0, qr/\b\QSvSETMAGIC(ST(0))/,       "set magic ST(0)" ],
+            # prepare stack for OUTLIST
+            [ 0, 0, qr/\bXSprePUSH\b/,               "XSprePUSH" ],
+            [ 0, 0, qr/\b\QEXTEND(SP,2)/,            "EXTEND(SP,2)" ],
+            # OUTPUT: RETVAL: push return value on stack
+            [ 0, 0, qr/\bsv_setpv\(TARG,\s*RETVAL\)/,"sv_setpv(TARG, RETVAL)" ],
+            [ 0, 0, qr/\bPUSHTARG\b/,                "PUSHTARG" ],
+            # OUTLIST: push abc on stack
+            [ 0, 0, qr/\b\QPUSHs(sv_newmortal())/,   "PUSHs(sv_newmortal())" ],
+            [ 0, 0, qr/\b\Qsv_setiv(ST(1),\E.*abc\)/,"sv_setiv(ST1, abc)" ],
+            # and return TETVAL and abc
+            [ 0, 0, qr/\QXSRETURN(2)/,               "has XSRETURN" ],
+
+            # should only be one PUSHs and one SvSETMAGI
+            [ 0, 1, qr/\bPUSHs\b.*\bPUSHs\b/s,          "only one PUSHs" ],
+            [ 0, 1, qr/\bSvSETMAGIC\b.*\bSvSETMAGIC\b/s,"only one SvSETMAGIC" ],
         ],
     );
 
