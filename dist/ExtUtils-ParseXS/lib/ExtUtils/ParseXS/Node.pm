@@ -111,6 +111,11 @@ BEGIN {
         'is_alien',  # var declared in INPUT line, but not in signature
         'in_input',  # the parameter has appeared in an INPUT statement
 
+        # values derived from the XSUB's OUTPUT line
+        'in_output',   # the parameter has appeared in an OUTPUT statement
+        'do_setmagic', # 'SETMAGIC: ENABLE' was active for this parameter
+        'output_code', # the optional setting-code for this parameter
+
         # derived values calculated later
         'defer',     # deferred initialisation template code
         'proto',     # overridden prototype char(s) (if any) from typemap

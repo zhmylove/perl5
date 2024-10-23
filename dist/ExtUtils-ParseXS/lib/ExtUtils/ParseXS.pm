@@ -319,10 +319,6 @@ BEGIN {
   'xsub_SETMAGIC_state',       # Bool: most recent value of SETMAGIC in an
                                # OUTPUT section.
 
-  'xsub_map_varname_to_seen_in_OUTPUT', # Hash of bools: indicates which
-                               # var names have been seen in an OUTPUT
-                               # section.
-
   'xsub_seen_RETVAL_in_OUTPUT',# Seen a var called 'RETVAL' in an OUTPUT
                                # section.
 
@@ -1230,9 +1226,6 @@ EOF
       ($implicit_OUTPUT_RETVAL, $self->{xsub_return_type}) =
                                   (0, 'void') if $self->{xsub_seen_NO_RETURN};
 
-      # used by OUTPUT_handler() to detect duplicate OUTPUT var lines
-      undef %{ $self->{xsub_map_varname_to_seen_in_OUTPUT} };
-
       # Process as many keyword lines/blocks as can be found which match
       # the pattern.
       # XXX POSTCALL is documented to precede OUTPUT, but here we allow
@@ -1254,7 +1247,7 @@ EOF
               grep {
                      defined $_->{in_out}
                   && $_->{in_out} =~ /OUT$/
-                  && !$self->{xsub_map_varname_to_seen_in_OUTPUT}{$_->{var}}
+                  && !$_->{in_output}
               }
               @{ $self->{xsub_sig}{params}})
       {
@@ -2164,14 +2157,20 @@ sub OUTPUT_handler {
     #
     my ($outarg, $outcode) = /^\s*(\S+)\s*(.*?)\s*$/s;
 
-    if ($self->{xsub_map_varname_to_seen_in_OUTPUT}->{$outarg}++) {
+    my ExtUtils::ParseXS::Node::Param $param =
+                                        $self->{xsub_sig}{names}{$outarg};
+
+    if (   $param && $param->{in_output}
+        or $outarg eq 'RETVAL' && $self->{xsub_seen_RETVAL_in_OUTPUT})
+    {
       $self->blurt("Error: duplicate OUTPUT parameter '$outarg' ignored");
       next;
     }
 
     my $var_num = ($outarg eq "RETVAL" && $self->{xsub_return_type} ne "void")
                     ? 0
-                    : $self->{xsub_sig}{names}{$outarg}{arg_num};
+                    : $param ? $param->{arg_num}
+                             : undef;
 
     unless (defined $var_num) {
       $self->blurt("Error: OUTPUT $outarg not a parameter");
@@ -2186,10 +2185,14 @@ sub OUTPUT_handler {
       next;
     }
 
+    $param->{in_output} = 1;
+    $param->{do_setmagic} = $self->{xsub_SETMAGIC_state};
+    $param->{output_code} = $outcode if length $outcode;
+
     # Emit the custom var-setter code if present; else use the one from
     # the OUTPUT typemap.
 
-    if ($outcode) {
+    if (length $outcode) {
       print "\t$outcode\n";
       print "\tSvSETMAGIC(" . $self->ST($var_num, 1) . ");\n"
         if $self->{xsub_SETMAGIC_state};
