@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 222;
+use Test::More tests => 244;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1788,6 +1788,111 @@ EOF
             [ 0, 0, qr/\bsv_setiv\b/,   "has sv_setiv" ],
         ],
 
+    );
+
+    test_many($preamble, 'XS_Foo_', \@test_fns);
+}
+
+{
+    # Test OUTPUT: keyword
+
+    my $preamble = Q(<<'EOF');
+        |MODULE = Foo PACKAGE = Foo
+        |
+        |PROTOTYPES:  DISABLE
+        |
+EOF
+
+    my @test_fns = (
+        [
+            "OUTPUT RETVAL",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int a)
+                |    CODE:
+                |      RETVAL = 99
+                |    OUTPUT:
+                |      RETVAL
+EOF
+            [ 0, 1, qr/\bSvSETMAGIC\b/,   "no set magic" ],
+            [ 0, 0, qr/\bPUSHi\b/,        "has PUSHi" ],
+            [ 0, 0, qr/\QXSRETURN(1)/,    "has XSRETURN" ],
+        ],
+
+        [
+            "OUTPUT RETVAL with set magic ignored",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int a)
+                |    CODE:
+                |      RETVAL = 99
+                |    OUTPUT:
+                |      SETMAGIC: ENABLE
+                |      RETVAL
+EOF
+            [ 0, 1, qr/\bSvSETMAGIC\b/,   "no set magic" ],
+            [ 0, 0, qr/\bPUSHi\b/,        "has PUSHi" ],
+            [ 0, 0, qr/\QXSRETURN(1)/,    "has XSRETURN" ],
+        ],
+
+        [
+            "OUTPUT vars with set magic mixture",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int aaa, int bbb, int ccc, int ddd)
+                |    CODE:
+                |      RETVAL = 99
+                |    OUTPUT:
+                |      RETVAL
+                |      aaa
+                |      SETMAGIC: ENABLE
+                |      bbb
+                |      SETMAGIC: DISABLE
+                |      ccc
+                |      SETMAGIC: ENABLE
+                |      ddd  my_set(xyz)
+EOF
+            [ 0, 0, qr/\b\QSvSETMAGIC(ST(0))/,       "set magic ST(0)" ],
+            [ 0, 0, qr/\b\QSvSETMAGIC(ST(1))/,       "set magic ST(1)" ],
+            [ 0, 1, qr/\b\QSvSETMAGIC(ST(2))/,       "no set magic ST(2)" ],
+            [ 0, 0, qr/\b\QSvSETMAGIC(ST(3))/,       "set magic ST(3)" ],
+            [ 0, 0, qr/\b\Qsv_setiv(ST(0),\E.*aaa/,  "setiv(aaa)" ],
+            [ 0, 0, qr/\b\Qsv_setiv(ST(1),\E.*bbb/,  "setiv(bbb)" ],
+            [ 0, 0, qr/\b\Qsv_setiv(ST(2),\E.*ccc/,  "setiv(ccc)" ],
+            [ 0, 1, qr/\b\Qsv_setiv(ST(3)/,          "no setiv(ddd)" ],
+            [ 0, 0, qr/\b\Qmy_set(xyz)/,             "myset" ],
+            [ 0, 0, qr/\bPUSHi\b.*RETVAL/,           "has PUSHi(RETVAL)" ],
+            [ 0, 0, qr/\QXSRETURN(1)/,               "has XSRETURN" ],
+        ],
+
+        [
+            "duplicate OUTPUT RETVAL",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int aaa)
+                |    CODE:
+                |      RETVAL = 99
+                |    OUTPUT:
+                |      RETVAL
+                |      RETVAL
+EOF
+            [ 1, 0, qr/Error: duplicate OUTPUT parameter 'RETVAL'/, "" ],
+        ],
+
+        [
+            "duplicate OUTPUT parameter",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int aaa)
+                |    CODE:
+                |      RETVAL = 99
+                |    OUTPUT:
+                |      RETVAL
+                |      aaa
+                |      aaa
+EOF
+            [ 1, 0, qr/Error: duplicate OUTPUT parameter 'aaa'/, "" ],
+        ],
     );
 
     test_many($preamble, 'XS_Foo_', \@test_fns);
