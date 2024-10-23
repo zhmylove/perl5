@@ -2169,20 +2169,20 @@ sub OUTPUT_handler {
       next;
     }
 
-    if ($outarg eq 'RETVAL') {
-      # Postpone processing the RETVAL line to last (it's left to the
-      # caller to finish).
-      $self->{xsub_RETVAL_typemap_code} = $outcode;
-      $self->{xsub_seen_RETVAL_in_OUTPUT} = 1;
-      next;
-    }
-
     my $var_num = ($outarg eq "RETVAL" && $self->{xsub_return_type} ne "void")
                     ? 0
                     : $self->{xsub_sig}{names}{$outarg}{arg_num};
 
     unless (defined $var_num) {
-      $self->blurt("Error: OUTPUT $outarg not an parameter");
+      $self->blurt("Error: OUTPUT $outarg not a parameter");
+      next;
+    }
+
+    if ($outarg eq 'RETVAL') {
+      # Postpone processing the RETVAL line to last (it's left to the
+      # caller to finish).
+      $self->{xsub_RETVAL_typemap_code} = $outcode;
+      $self->{xsub_seen_RETVAL_in_OUTPUT} = 1;
       next;
     }
 

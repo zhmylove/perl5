@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 246;
+use Test::More tests => 250;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1916,6 +1916,58 @@ EOF
                 |      aaa
 EOF
             [ 1, 0, qr/Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section/, "" ],
+        ],
+
+        [
+            "OUTPUT RETVAL not a parameter",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(int aaa)
+                |    CODE:
+                |      xyz
+                |    OUTPUT:
+                |      RETVAL
+EOF
+            [ 1, 0, qr/\QError: OUTPUT RETVAL not a parameter/, "" ],
+        ],
+
+        [
+            "OUTPUT RETVAL IS a parameter",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int aaa)
+                |    CODE:
+                |      xyz
+                |    OUTPUT:
+                |      RETVAL
+EOF
+            [ 1, 1, qr/\QError: OUTPUT RETVAL not a parameter/, "" ],
+        ],
+
+        [
+            "OUTPUT foo not a parameter",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(int aaa)
+                |    CODE:
+                |      xyz
+                |    OUTPUT:
+                |      bbb
+EOF
+            [ 1, 0, qr/\QError: OUTPUT bbb not a parameter/, "" ],
+        ],
+
+        [
+            "OUTPUT length(foo) not a parameter",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(char* aaa, int length(aaa))
+                |    CODE:
+                |      xyz
+                |    OUTPUT:
+                |      length(aaa)
+EOF
+            [ 1, 0, qr/\QError: OUTPUT length(aaa) not a parameter/, "" ],
         ],
     );
 
