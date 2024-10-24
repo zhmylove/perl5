@@ -2744,7 +2744,7 @@ Returns a pointer to the newly-created string, and sets C<*lenp> to
 reflect the new length in bytes.  The caller is responsible for arranging for
 the memory used by this string to get freed.
 
-Upon successful return, the number of variants in the string can be computed by
+Upon return, the number of variants in the string can be computed by
 having saved the value of C<*lenp> before the call, and subtracting it from the
 after-call value of C<*lenp>.
 
