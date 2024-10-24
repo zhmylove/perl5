@@ -1284,6 +1284,7 @@ EOF
             var         => 'RETVAL',
             arg_num     => 1,
             type        => $self->{xsub_return_type},
+            output_code => $self->{xsub_RETVAL_typemap_code},
             do_setmagic => 0,   # RETVAL almost never needs SvSETMAGIC()
           } );
         $self->generate_output($param);
@@ -2167,7 +2168,7 @@ sub OUTPUT_handler {
     if ($outarg eq 'RETVAL') {
       # Postpone processing the RETVAL line to last (it's left to the
       # caller to finish).
-      $self->{xsub_RETVAL_typemap_code} = $outcode;
+      $self->{xsub_RETVAL_typemap_code} = $outcode if length $outcode;
       $self->{xsub_seen_RETVAL_in_OUTPUT} = 1;
       next;
     }
@@ -3158,8 +3159,8 @@ sub generate_output {
   my ExtUtils::ParseXS::Node::Param $param = shift;
   my $out_num = shift;
 
-  my ($type, $num, $var, $do_setmagic)
-    = @{$param}{qw(type arg_num var do_setmagic)};
+  my ($type, $num, $var, $do_setmagic, $output_code)
+    = @{$param}{qw(type arg_num var do_setmagic output_code)};
 
   unless (defined $type) {
     $self->blurt("Can't determine output type for '$var'");
@@ -3270,9 +3271,9 @@ sub generate_output {
                              }
                              @{$self->{xsub_sig}{params}};
 
-    if ($self->{xsub_RETVAL_typemap_code}) {
+    if (defined $output_code) {
       # Deferred RETVAL with overridden typemap code. Just emit as-is.
-      print "\t$self->{xsub_RETVAL_typemap_code}\n";
+      print "\t$output_code\n";
       print "\t++SP;\n" if $outlist_count;
       return;
     }
@@ -3289,10 +3290,7 @@ sub generate_output {
     #   SV * targ = (PL_op->op_private & OPpENTERSUB_HASTARG)
     #               ? PAD_SV(PL_op->op_targ) : sv_newmortal()
 
-    my $outputmap = $self->{typemaps_object}->get_outputmap( ctype => $self->{xsub_return_type} );
-    my $target = $self->{config_optimize} && $outputmap && $outputmap->targetable;
-    my $var = 'RETVAL';
-    my $type = $self->{xsub_return_type};
+    my $target = $self->{config_optimize} && $outputmap->targetable;
 
     if ($target) {
       # Emit targ optimisation: basically, emit a PUSHi() or whatever,
@@ -3303,7 +3301,7 @@ sub generate_output {
       # Expand it via eval.
       my $what = $self->eval_output_typemap_code(
         qq("$target->{what}"),
-        {var => $var, type => $self->{xsub_return_type}}
+        {var => $var, type => $type}
       );
 
       if (not $target->{with_size} and $target->{type} eq 'p') {
@@ -3325,7 +3323,7 @@ sub generate_output {
         $tsize = '' unless defined $tsize;
         $tsize = $self->eval_output_typemap_code(
           qq("$tsize"),
-          {var => $var, type => $self->{xsub_return_type}}
+          {var => $var, type => $type}
         );
 
         print "\tXSprePUSH;\n" unless $outlist_count;
