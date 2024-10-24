@@ -2177,17 +2177,7 @@ sub OUTPUT_handler {
     $param->{do_setmagic} = $self->{xsub_SETMAGIC_state};
     $param->{output_code} = $outcode if length $outcode;
 
-    # Emit the custom var-setter code if present; else use the one from
-    # the OUTPUT typemap.
-
-    if (length $outcode) {
-      print "\t$outcode\n";
-      print "\tSvSETMAGIC(" . $self->ST($var_num, 1) . ");\n"
-        if $self->{xsub_SETMAGIC_state};
-    }
-    else {
-      $self->generate_output($param);
-    }
+    $self->generate_output($param);
   } # foreach line in OUTPUT block
 }
 
@@ -3526,7 +3516,13 @@ sub generate_output {
     #
     #  which means that if we hit this branch, $evalexpr will have been
     #  expanded to something like sv_setsv(ST(2), boolSV(foo))
-    print $self->eval_output_typemap_code("qq\a$expr\a", $eval_vars);
+
+    # Use the code on the OUTPUT line if specified, otherwise use the
+    # typemap
+    my $code = defined $output_code
+        ? "\t$output_code\n"
+        : $self->eval_output_typemap_code("qq\a$expr\a", $eval_vars);
+    print $code;
 
     # For parameters in the OUTPUT section, honour the SETMAGIC in force
     # at the time. For parameters instead being output because of an OUT
