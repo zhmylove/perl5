@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 267;
+use Test::More tests => 389;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -2016,6 +2016,399 @@ EOF
             [ 0, 1, qr/\bPUSHs\b.*\bPUSHs\b/s,          "only one PUSHs" ],
             [ 0, 1, qr/\bSvSETMAGIC\b.*\bSvSETMAGIC\b/s,"only one SvSETMAGIC" ],
         ],
+    );
+
+    test_many($preamble, 'XS_Foo_', \@test_fns);
+}
+
+{
+    # Test RETVAL as a parameter. This isn't well documented as to
+    # how it should be interpreted, so these tests are more about checking
+    # current behaviour so that inadvertent changes are detected, rather
+    # than approving the current behaviour.
+
+    my $preamble = Q(<<'EOF');
+        |MODULE = Foo PACKAGE = Foo
+        |
+        |PROTOTYPES:  DISABLE
+        |
+EOF
+
+    my @test_fns = (
+
+        # First, with void return type.
+        # Generally in this case, RETVAL is currently not special - it's
+        # just another name for a parameter. If it doesn't have a type
+        # specified, it's treated as a placeholder.
+
+        [
+            # XXX this generates an autocall using undeclared RETVAL,
+            # which should be an error
+            "void RETVAL no-type param autocall",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(RETVAL, short abc)
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\Qfoo(RETVAL, abc)/,              "autocall" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,              "ret empty" ],
+        ],
+
+        [
+            "void RETVAL no-type param",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(RETVAL, short abc)
+                |    CODE:
+                |        xyz
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,              "ret empty" ],
+        ],
+
+        [
+            "void RETVAL typed param autocall",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(int RETVAL, short abc)
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,     "declare and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\Qfoo(RETVAL, abc)/,              "autocall" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,              "ret empty" ],
+        ],
+
+        [
+            "void RETVAL INPUT typed param autocall",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(RETVAL, short abc)
+                |   int RETVAL
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,     "declare and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\Qfoo(RETVAL, abc)/,              "autocall" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,              "ret empty" ],
+        ],
+
+        [
+            "void RETVAL typed param",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(int RETVAL, short abc)
+                |    CODE:
+                |        xyz
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,     "declare and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,              "ret empty" ],
+        ],
+
+        [
+            "void RETVAL INPUT typed param",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(RETVAL, short abc)
+                |   int RETVAL
+                |    CODE:
+                |        xyz
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,     "declare and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,              "ret empty" ],
+        ],
+
+        [
+            "void RETVAL alien autocall",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(short abc)
+                |   int RETVAL = 99
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc"\)/,           "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=\s*99/,         "declare and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(0)/,        "abc is ST0" ],
+            [ 0, 0, qr/\Qfoo(abc)/,                      "autocall" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,              "ret empty" ],
+        ],
+
+        [
+            "void RETVAL alien",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(short abc)
+                |   int RETVAL = 99
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc"\)/,           "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=\s*99/,         "declare and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(0)/,        "abc is ST0" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,              "ret empty" ],
+        ],
+
+
+        # Next, with 'long' return type.
+        # Generally, RETVAL is treated as a normal parameter, with
+        # some bad behaviour (such as multiple definitions) when that
+        # clashes with the implicit use of RETVAL
+
+        [
+            "long RETVAL no-type param autocall",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(RETVAL, short abc)
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            # XXX RETVAL is passed uninitialised to the autocall fn
+            [ 0, 0, qr/long\s+RETVAL;/,                  "declare no init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\Qfoo(RETVAL, abc)/,              "autocall" ],
+            [ 0, 0, qr/\b\QXSRETURN(1)/,                 "ret 1" ],
+        ],
+
+        [
+            "long RETVAL no-type param",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(RETVAL, short abc)
+                |    CODE:
+                |        xyz
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            [ 0, 0, qr/long\s+RETVAL;/,                  "declare no init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\b\QXSRETURN(1)/,                 "ret 1" ],
+        ],
+
+        [
+            "long RETVAL typed param autocall",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(int RETVAL, short abc)
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            #XXX in 5.40, just 'int;' was emitted; now an entire
+            #XXX duplicate declaration is emitted
+            [ 0, 0, qr/long\s+RETVAL;/,                  "long decl  no init" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,     "int  decl and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\bRETVAL\s*=\s*foo\(RETVAL, abc\)/,"autocall" ],
+            [ 0, 0, qr/\b\QPUSHi((IV)RETVAL)/,           "PUSHi" ],
+            [ 0, 0, qr/\b\QXSRETURN(1)/,                 "ret 1" ],
+        ],
+
+        [
+            "long RETVAL INPUT typed param autocall",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(RETVAL, short abc)
+                |   int RETVAL
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            [ 0, 1, qr/long\s+RETVAL/,                   "no long decl" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,     "int  decl and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
+            [ 0, 0, qr/\bRETVAL\s*=\s*foo\(RETVAL, abc\)/,"autocall" ],
+            [ 0, 0, qr/\b\QPUSHi((IV)RETVAL)/,            "PUSHi" ],
+            [ 0, 0, qr/\b\QXSRETURN(1)/,                  "ret 1" ],
+        ],
+
+        [
+            "long RETVAL INPUT typed param autocall 2nd pos",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(short abc, RETVAL)
+                |   int RETVAL
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc,\s*RETVAL"\)/, "usage" ],
+            [ 0, 1, qr/long\s+RETVAL/,                   "no long decl" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(1)/,     "int  decl and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(0)/,        "abc is ST0" ],
+            [ 0, 0, qr/\bRETVAL\s*=\s*foo\(abc, RETVAL\)/,"autocall" ],
+            [ 0, 0, qr/\b\QPUSHi((IV)RETVAL)/,            "PUSHi" ],
+            [ 0, 0, qr/\b\QXSRETURN(1)/,                  "ret 1" ],
+        ],
+
+        [
+            "long RETVAL typed param",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(int RETVAL, short abc)
+                |    CODE:
+                |        xyz
+                |    OUTPUT:
+                |        RETVAL
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            #XXX in 5.40, just 'int;' was emitted; now an entire
+            #XXX duplicate declaration is emitted
+            [ 0, 0, qr/long\s+RETVAL;/,               "long decl  no init" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,  "int  decl and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,     "abc is ST1" ],
+            [ 0, 0, qr/\b\QPUSHi((IV)RETVAL)/,        "PUSHi" ],
+            [ 0, 0, qr/\b\QXSRETURN(1)/,              "ret 1" ],
+        ],
+
+        [
+            "long RETVAL INPUT typed param",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(RETVAL, short abc)
+                |    int RETVAL
+                |    CODE:
+                |        xyz
+                |    OUTPUT:
+                |        RETVAL
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
+            [ 0, 1, qr/long\s+RETVAL/,                "no long declare" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,  "int  declare and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,     "abc is ST1" ],
+            [ 0, 0, qr/\b\QPUSHi((IV)RETVAL)/,        "PUSHi" ],
+            [ 0, 0, qr/\b\QXSRETURN(1)/,              "ret 1" ],
+        ],
+
+        [
+            "long RETVAL alien autocall",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(short abc)
+                |   int RETVAL = 99
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc"\)/,        "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=\s*99/,      "declare and init" ],
+            [ 0, 0, qr/short\s+abc\s*=.*\QST(0)/,     "abc is ST0" ],
+            [ 0, 0, qr/\bRETVAL\s*=\s*foo\(abc\)/,    "autocall" ],
+            [ 0, 0, qr/\b\QXSRETURN(1)/,              "ret 1" ],
+        ],
+
+        [
+            "long RETVAL alien",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(abc, def)
+                |   int def
+                |   int RETVAL = 99
+                |   int abc
+                |  CODE:
+                |    xyz
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc,\s*def"\)/, "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=\s*99/,      "declare and init" ],
+            [ 0, 0, qr/int\s+abc\s*=.*\QST(0)/,       "abc is ST0" ],
+            [ 0, 0, qr/int\s+def\s*=.*\QST(1)/,       "def is ST1" ],
+            [ 0, 0, qr/int\s+def.*int\s+RETVAL.*int\s+abc/s,  "ordering" ],
+            [ 0, 0, qr/\b\QXSRETURN(1)/,              "ret 1" ],
+        ],
+
+
+        # Test NO_OUTPUT
+
+        [
+            "NO_OUTPUT autocall",
+            [ Q(<<'EOF') ],
+                |NO_OUTPUT long
+                |foo(int abc)
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc"\)/,        "usage" ],
+            [ 0, 0, qr/long\s+RETVAL;/,               "long declare  no init" ],
+            [ 0, 0, qr/int\s+abc\s*=.*\QST(0)/,       "abc is ST0" ],
+            [ 0, 0, qr/\bRETVAL\s*=\s*foo\(abc\)/,    "autocall" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,           "ret empty" ],
+        ],
+
+        [
+            "NO_OUTPUT with CODE",
+            [ Q(<<'EOF') ],
+                |NO_OUTPUT long
+                |foo(int abc)
+                |   CODE:
+                |      xyz
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc"\)/,        "usage" ],
+            [ 0, 0, qr/long\s+RETVAL;/,               "long declare  no init" ],
+            [ 0, 0, qr/int\s+abc\s*=.*\QST(0)/,       "abc is ST0" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,           "ret empty" ],
+        ],
+
+        [
+            "NO_OUTPUT with CODE and OUTPUT",
+            [ Q(<<'EOF') ],
+                |NO_OUTPUT long
+                |foo(int abc)
+                |   CODE:
+                |      xyz
+                |   OUTPUT:
+                |      RETVAL
+EOF
+            [ 1, 0, qr/Error: OUTPUT RETVAL not a parameter/,  "OUTPUT err" ],
+        ],
+
+
+        # Test duplicate RETVAL parameters
+
+        [
+            "void dup",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(RETVAL, RETVAL)
+EOF
+            [ 1, 0, qr/Error: duplicate definition of parameter 'RETVAL'/,  "" ],
+        ],
+
+        [
+            "void dup typed",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(int RETVAL, short RETVAL)
+EOF
+            [ 1, 0, qr/Error: duplicate definition of parameter 'RETVAL'/,  "" ],
+        ],
+
+        [
+            "void dup INPUT",
+            [ Q(<<'EOF') ],
+                |void
+                |foo(RETVAL, RETVAL)
+                |   int RETVAL
+EOF
+            [ 1, 0, qr/Error: duplicate definition of parameter 'RETVAL'/,  "" ],
+        ],
+
+        [
+            "long dup",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(RETVAL, RETVAL)
+EOF
+            [ 1, 0, qr/Error: duplicate definition of parameter 'RETVAL'/,  "" ],
+        ],
+
+        [
+            "long dup typed",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(int RETVAL, short RETVAL)
+EOF
+            [ 1, 0, qr/Error: duplicate definition of parameter 'RETVAL'/,  "" ],
+        ],
+
+        [
+            "long dup INPUT",
+            [ Q(<<'EOF') ],
+                |long
+                |foo(RETVAL, RETVAL)
+                |   int RETVAL
+EOF
+            [ 1, 0, qr/Error: duplicate definition of parameter 'RETVAL'/,  "" ],
+        ],
+
+
     );
 
     test_many($preamble, 'XS_Foo_', \@test_fns);
