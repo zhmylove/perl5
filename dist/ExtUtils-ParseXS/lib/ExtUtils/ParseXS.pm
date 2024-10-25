@@ -231,7 +231,7 @@ BEGIN {
 
   # Per-XSUB parsing state:
 
-  'xsub_seen_NO_RETURN',       # Bool: XSUB declared as NO_RETURN
+  'xsub_seen_NO_OUTPUT',       # Bool: XSUB declared as NO_OUTPUT
 
   'xsub_seen_extern_C',        # Bool: XSUB return type is 'extern "C" ...'
 
@@ -671,7 +671,7 @@ EOM
     $self->{xsub_prototype}            = $self->{PROTOTYPES_value};
     $self->{xsub_SCOPE_enabled}        = 0;
     $self->{xsub_map_overload_name_to_seen} = {};
-    $self->{xsub_seen_NO_RETURN}            = 0;
+    $self->{xsub_seen_NO_OUTPUT}            = 0;
     $self->{xsub_seen_extern_C}             = 0;
     $self->{xsub_seen_static}               = 0;
     $self->{xsub_seen_PPCODE}               = 0;
@@ -729,7 +729,7 @@ EOM
     # function to be on the same line.)
     ($self->{xsub_return_type}) = ExtUtils::Typemaps::tidy_type($_);
 
-    $self->{xsub_seen_NO_RETURN} = 1
+    $self->{xsub_seen_NO_OUTPUT} = 1
       if $self->{xsub_return_type} =~ s/^NO_OUTPUT\s+//;
 
     # Allow one-line declarations. This splits a single line like:
@@ -1224,7 +1224,7 @@ EOF
       #   ($implicit_OUTPUT_RETVAL).
       # - Also from this point on, treat the (non-void) return type as void.
       ($implicit_OUTPUT_RETVAL, $self->{xsub_return_type}) =
-                                  (0, 'void') if $self->{xsub_seen_NO_RETURN};
+                                  (0, 'void') if $self->{xsub_seen_NO_OUTPUT};
 
       # Process as many keyword lines/blocks as can be found which match
       # the pattern.
