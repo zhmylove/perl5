@@ -2650,8 +2650,8 @@ Perl_utf8_hop(const U8 *s, SSize_t off)
 }
 
 /*
-=for apidoc utf8_hop_forward
-=for apidoc utf8_hop_forward_overshoot
+=for apidoc      utf8_hop_forward
+=for apidoc_item utf8_hop_forward_overshoot
 
 These each take as input a position, C<s0>, into a string encoded as UTF-8
 which ends at the byte before C<end>, and return the position within it that is
