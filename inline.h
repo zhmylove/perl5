@@ -2818,7 +2818,7 @@ Perl_utf8_hop_back_overshoot(const U8 *s, SSize_t off,
 
 /*
 =for apidoc      utf8_hop_safe
-=for apidoc_item utf8_hop_safe_overshoot
+=for apidoc_item utf8_hop_overshoot
 
 These each take as input a string encoded as UTF-8 which starts at C<start>,
 ending at C<end>, and a position into it given by C<s>, and return the
