@@ -23,7 +23,12 @@
  * which differs from UTF-8 only in a few details.  It is often useful to
  * translate UTF-EBCDIC into this form for processing.  In general, macros and
  * functions that are expecting their inputs to be either in I8 or UTF-8 are
- * named UTF_foo (without an '8'), to indicate this.
+ * named UTF_foo (without an '8'), to indicate this.  khw thinks it would be
+ * clearer if these were renamed to be I8, because UTF is the prefix for UTF16,
+ * U32, etc., and we use it only for 8 bit quantities; though on ASCII machines
+ * these are final, not intermediate, values.  U8 would be more accurate, but
+ * bears too much resemblence to the ubiquitous U8 declaration.  'I8' stands
+ * out as very different from 'UTFn'.
  *
  * Unfortunately there are inconsistencies.
  *
