@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 389;
+use Test::More tests => 391;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -2192,9 +2192,10 @@ EOF
                 |foo(int RETVAL, short abc)
 EOF
             [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
-            #XXX in 5.40, just 'int;' was emitted; now an entire
-            #XXX duplicate declaration is emitted
-            [ 0, 0, qr/long\s+RETVAL;/,                  "long decl  no init" ],
+            # duplicate or malformed declarations used to be emitted
+            [ 0, 1, qr/int\s+RETVAL;/,                   "no none init init" ],
+            [ 0, 1, qr/long\s+RETVAL;/,                  "no none init long" ],
+
             [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,     "int  decl and init" ],
             [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,        "abc is ST1" ],
             [ 0, 0, qr/\bRETVAL\s*=\s*foo\(RETVAL, abc\)/,"autocall" ],
@@ -2245,9 +2246,10 @@ EOF
                 |        RETVAL
 EOF
             [ 0, 0, qr/_usage\(cv,\s*"RETVAL,\s*abc"\)/, "usage" ],
-            #XXX in 5.40, just 'int;' was emitted; now an entire
-            #XXX duplicate declaration is emitted
-            [ 0, 0, qr/long\s+RETVAL;/,               "long decl  no init" ],
+            # duplicate or malformed declarations used to be emitted
+            [ 0, 1, qr/int\s+RETVAL;/,                "no none init init" ],
+            [ 0, 1, qr/long\s+RETVAL;/,               "no none init long" ],
+
             [ 0, 0, qr/\bint\s+RETVAL\s*=.*\QST(0)/,  "int  decl and init" ],
             [ 0, 0, qr/short\s+abc\s*=.*\QST(1)/,     "abc is ST1" ],
             [ 0, 0, qr/\b\QPUSHi((IV)RETVAL)/,        "PUSHi" ],

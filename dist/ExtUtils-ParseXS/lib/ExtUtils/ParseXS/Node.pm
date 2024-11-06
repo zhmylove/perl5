@@ -589,6 +589,41 @@ sub parse {
     $param->check($pxs)
   }
 
+  # For non-void return types, add a fake RETVAL parameter. This triggers
+  # the emitting of an 'int RETVAL;' declaration or similar, and (e.g. if
+  # later flagged as in_output), triggers the emitting of code to return
+  # RETVAL's value.
+  #
+  # Note that a RETVAL param can be in three main states:
+  #
+  #  fully-synthetic  What is being created here. RETVAL hasn't appeared
+  #                   in a signature or INPUT.
+  #
+  #  semi-real        Same as fully-synthetic, but with a defined
+  #                   arg_num, and with an updated position within
+  #                   @{$self->{params}}.
+  #                   A RETVAL has appeared in the signature, but
+  #                   without a type yet specified, so it continues to
+  #                   use {xsub_return_type}.
+  #
+  #  real             is_synthetic, no_init flags turned off. Its
+  #                   type comes from the sig or INPUT line. This is
+  #                   just a normal parameter now.
+
+  if ($pxs->{xsub_return_type} ne 'void') {
+    my ExtUtils::ParseXS::Node::Param $param =
+      ExtUtils::ParseXS::Node::Param->new( {
+        var          => 'RETVAL',
+        type         => $pxs->{xsub_return_type},
+        no_init      => 1, # just declare the var, don't initialise it
+        is_synthetic => 1,
+      } );
+
+    push @{$self->{params}}, $param;
+    $self->{names}{RETVAL} = $param;
+    $param->check($pxs)
+  }
+
   for (@param_texts) {
     # Process each parameter. A parameter is of the general form:
     #
@@ -647,15 +682,37 @@ sub parse {
       next;
     }
 
+    undef $type unless length($type) && $type =~ /\S/;
+
     my ExtUtils::ParseXS::Node::Param $param
         = ExtUtils::ParseXS::Node::Param->new( {
             var => $name,
           });
 
-    if (exists $self->{names}{$name}) {
-      $pxs->blurt(
-          "Error: duplicate definition of parameter '$name' ignored");
-      next;
+    # Check for duplicates
+
+    my $old_param = $self->{names}{$name};
+    if ($old_param) {
+      if (    $name eq 'RETVAL'
+          and $old_param->{is_synthetic}
+          and !defined $old_param->{arg_num})
+      {
+        # RETVAL is currently fully synthetic. Now that it has been
+        # declared as a parameter too, override any implicit RETVAL
+        # declaration. Delete the original param from the param list.
+        @{$self->{params}} = grep $_ != $old_param, @{$self->{params}};
+
+        # If the param declaration includes a type, it becomes a real
+        # parameter. Otherwise the param is kept as 'semi-real'
+        # (synthetic, but with an arg_num) until such time as it gets a
+        # type set in INPUT, which would remove the synthetic/no_init.
+        $param = $old_param if !defined $type;
+      }
+      else {
+        $pxs->blurt(
+            "Error: duplicate definition of parameter '$name' ignored");
+        next;
+      }
     }
 
     push @{$self->{params}}, $param;
@@ -676,8 +733,6 @@ sub parse {
     }
 
     # Process optional type
-
-    undef $type unless length($type) && $type =~ /\S/;
 
     if (defined($type) && !$pxs->{config_allow_argtypes}) {
       $pxs->blurt("parameter type not allowed under -noargtypes");
@@ -777,7 +832,11 @@ sub C_func_signature {
 
     my @args;
     for my $param (@{$self->{params}}) {
-        next if $param->{is_synthetic}; # THIS etc
+        next if    $param->{is_synthetic} # THIS/CLASS/RETVAL
+                   # if a synthetic RETVAL has acquired an arg_num, then
+                   # it's appeared in the signature (although without a
+                   # type) and has become semi-real.
+                && !($param->{var} eq 'RETVAL' && defined($param->{arg_num}));
 
         if ($param->{is_length}) {
             push @args, "XSauto_length_of_$param->{len_name}";

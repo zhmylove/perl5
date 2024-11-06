@@ -309,11 +309,6 @@ BEGIN {
   'xsub_alias_clash_hinted',   # Bool: an ALIAS warning-hint has been emitted.
 
 
-  # Per-XSUB INPUT section parsing state:
-
-  'xsub_seen_RETVAL_in_INPUT', # Seen var called 'RETVAL' in an INPUT section.
-
-
   # Per-XSUB OUTPUT section parsing state:
 
   'xsub_SETMAGIC_state',       # Bool: most recent value of SETMAGIC in an
@@ -998,7 +993,6 @@ EOF
       }
 
       # First, initialize variables manipulated by INPUT_handler().
-      $self->{xsub_seen_RETVAL_in_INPUT} = 0;  # seen a RETVAL var
       $self->{xsub_deferred_code_lines} = "";  # lines to be emitted after
                                                # PREINIT/INPUT
                         #
@@ -1046,10 +1040,6 @@ EOF
 
         # Do any variable declarations associated with having a return value
         if ($self->{xsub_return_type} ne "void") {
-
-          # Emit the RETVAL variable declaration.
-          print "\t" . $self->map_type($self->{xsub_return_type}, 'RETVAL') . ";\n"
-            if !$self->{xsub_seen_RETVAL_in_INPUT};
 
           # If it looks like the output typemap code can be hacked to
           # use a TARG to optimise returning the value (rather than
@@ -2011,13 +2001,11 @@ sub INPUT_handler {
       next;
     }
 
-    # flag 'RETVAL' as having been seen
-    $self->{xsub_seen_RETVAL_in_INPUT} |= $var_name eq "RETVAL";
-
     my ($var_num, $is_alien);
 
     my ExtUtils::ParseXS::Node::Param $param
           = $self->{xsub_sig}{names}{$var_name};
+
 
     if (defined $param) {
       # The var appeared in the signature too.
@@ -2035,6 +2023,24 @@ sub INPUT_handler {
             "Error: duplicate definition of parameter '$var_name' ignored");
           next;
       }
+
+      if ($var_name eq 'RETVAL' and $param->{is_synthetic}) {
+        # Convert a synthetic RETVAL into a real parameter
+        delete $param->{is_synthetic};
+        delete $param->{no_init};
+        if (! defined $param->{arg_num}) {
+          # if has arg_num, RETVAL has appeared in signature but with no
+          # type, and has already been moved to the correct position;
+          # otherwise, it's an alien var that didn't appear in the
+          # signature; move to the correct position.
+          @{$self->{xsub_sig}{params}} =
+                    grep $_ != $param, @{$self->{xsub_sig}{params}};
+          push @{$self->{xsub_sig}{params}}, $param;
+          $is_alien          = 1;
+          $param->{is_alien} = 1;
+        }
+      }
+
       $param->{in_input} = 1;
       $var_num = $param->{arg_num};
     }
