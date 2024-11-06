@@ -3397,7 +3397,7 @@ sub generate_output {
     #
     # There is a further special optimisation for the T_SV case,
     # where RETVAL is already of type SV* (i.e. $ntype eq 'SVPtr').
-    # In the case where the typemap of of the form '$arg = Foo($var)',
+    # In the case where the typemap is of the form '$arg = Foo($var)',
     # (as opposed to 'sv_setFOO($arg, $var)'), then we don't declare
     # RETVALSV and just use RETVAL directly.
     #
