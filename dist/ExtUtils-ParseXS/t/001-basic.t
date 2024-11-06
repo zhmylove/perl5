@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 264;
+use Test::More tests => 267;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1835,6 +1835,20 @@ EOF
             [ 0, 1, qr/\bSvSETMAGIC\b/,   "no set magic" ],
             [ 0, 0, qr/\bPUSHi\b/,        "has PUSHi" ],
             [ 0, 0, qr/\QXSRETURN(1)/,    "has XSRETURN" ],
+        ],
+
+        [
+            "OUTPUT RETVAL with code",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int a)
+                |    CODE:
+                |      RETVAL = 99
+                |    OUTPUT:
+                |      RETVAL PUSHs(my_newsviv(RETVAL));
+EOF
+            [ 0, 0, qr/\QPUSHs(my_newsviv(RETVAL));/,   "uses code" ],
+            [ 0, 0, qr/\QXSRETURN(1)/,                  "has XSRETURN" ],
         ],
 
         [
