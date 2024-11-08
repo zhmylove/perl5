@@ -3263,7 +3263,7 @@ sub generate_output {
 
   unless (defined $type) {
     $self->blurt("Can't determine output type for '$var'");
-    next;
+    return;
   }
 
   my $arg = $self->ST($num, 1);
