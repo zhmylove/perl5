@@ -660,7 +660,7 @@ sub parse {
 
     if (defined $out_type) {
       if ($pxs->{config_allow_inout}) {
-        $out_type =  $1 eq 'IN' ? '' : $1;
+        $out_type =  $out_type eq 'IN' ? '' : $out_type;
       }
       else {
         $pxs->blurt("parameter IN/OUT modifier not allowed under -noinout");
