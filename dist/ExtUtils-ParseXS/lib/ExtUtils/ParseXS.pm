@@ -314,15 +314,6 @@ BEGIN {
   'xsub_SETMAGIC_state',       # Bool: most recent value of SETMAGIC in an
                                # OUTPUT section.
 
-  'xsub_seen_RETVAL_in_OUTPUT',# Seen a var called 'RETVAL' in an OUTPUT
-                               # section.
-
-  'xsub_RETVAL_typemap_code',  # Deferred typemap code from an OUTPUT section
-                               # "RETVAL output-code" line (deferred
-                               # because RETVAL code is emitted after any
-                               # arg update code).
-
-
   # Per-XSUB code-emitting state:
 
   'xsub_deferred_code_lines',  # A multi-line string containing lines of
@@ -997,7 +988,6 @@ EOF
                                                # PREINIT/INPUT
                         #
                         # keep track of which vars have been seen
-      $self->{xsub_seen_RETVAL_in_OUTPUT} = 0; # RETVAL seen in OUTPUT section
 
       # Process any implicit INPUT section.
       $self->INPUT_handler($_);
@@ -1202,12 +1192,6 @@ EOF
       # plus some post-processing of OUTPUT.
       # ----------------------------------------------------------------
 
-      # Initialise some state, which may be updated by calls to
-      # OUTPUT_handler():
-      $self->{xsub_seen_RETVAL_in_OUTPUT} = 0;  # bool: RETVAL seen in OUTPUT section;
-      undef $self->{xsub_RETVAL_typemap_code} ; # code to set RETVAL (from
-                                                # OUTPUT section);
-
       # If SXUB was declared as NO_OUTPUT, then:
       # - we don't need to return RETVAL to the caller, even if the
       #   auto-generated call to the library function indicates it was seen
@@ -1222,9 +1206,12 @@ EOF
       # them in any order and multiplicity.
       $self->process_keywords("OUTPUT|POSTCALL|$generic_xsub_keys");
 
+      {
+        my $retval = $self->{xsub_sig}{names}{RETVAL};
+      #
       # A CODE section using RETVAL must also have an OUTPUT entry
       if (        $self->{xsub_seen_RETVAL_in_CODE}
-          and not $self->{xsub_seen_RETVAL_in_OUTPUT}
+          and not ($retval && $retval->{in_output})
           and     $self->{xsub_return_type} ne 'void')
       {
         $self->Warn("Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section.");
@@ -1252,33 +1239,22 @@ EOF
                                @{$self->{xsub_sig}{params}};
       if ($outlist_count) {
         my $ext = $outlist_count;
-        ++$ext if $self->{xsub_seen_RETVAL_in_OUTPUT} || $implicit_OUTPUT_RETVAL;
+        ++$ext if ($retval && $retval->{in_output}) || $implicit_OUTPUT_RETVAL;
         print "\tXSprePUSH;";
         print "\tEXTEND(SP,$ext);\n";
       }
 
       # ----------------------------------------------------------------
       # All OUTPUT done; now handle an implicit or deferred RETVAL.
-      # OUTPUT_handler() will have skipped any RETVAL line, just setting
-      # $self->{xsub_seen_RETVAL_in_OUTPUT} to true and setting
-      # $self->{xsub_RETVAL_typemap_code} to the
-      # overridden typemap code on the RETVAL line, if any.
+      # OUTPUT_handler() will have skipped any RETVAL line.
       # Also, $implicit_OUTPUT_RETVAL indicates that an implicit RETVAL
       # should be generated, due to a non-void CODE-less XSUB.
       # ----------------------------------------------------------------
 
-      if ($self->{xsub_seen_RETVAL_in_OUTPUT} || $implicit_OUTPUT_RETVAL) {
-        # emit a deferred RETVAL from OUTPUT or implicit RETVAL
-        my ExtUtils::ParseXS::Node::Param $param =
-          ExtUtils::ParseXS::Node::Param->new( {
-            var         => 'RETVAL',
-            arg_num     => 1,
-            type        => $self->{xsub_return_type},
-            output_code => $self->{xsub_RETVAL_typemap_code},
-            do_setmagic => 0,   # RETVAL almost never needs SvSETMAGIC()
-          } );
-        $self->generate_output($param);
-      }
+        if (($retval && $retval->{in_output}) || $implicit_OUTPUT_RETVAL) {
+          # emit a deferred RETVAL from OUTPUT or implicit RETVAL
+          $self->generate_output($retval);
+        }
 
       $XSRETURN_count = 1 if $self->{xsub_return_type} ne "void";
       my $num = $XSRETURN_count;
@@ -1291,6 +1267,8 @@ EOF
                            @{$self->{xsub_sig}{params}}
       ) {
         $self->generate_output($param, $num++);
+      }
+
       }
 
 
@@ -2154,9 +2132,7 @@ sub OUTPUT_handler {
     my ExtUtils::ParseXS::Node::Param $param =
                                         $self->{xsub_sig}{names}{$outarg};
 
-    if (   $param && $param->{in_output}
-        or $outarg eq 'RETVAL' && $self->{xsub_seen_RETVAL_in_OUTPUT})
-    {
+    if ($param && $param->{in_output}) {
       $self->blurt("Error: duplicate OUTPUT parameter '$outarg' ignored");
       next;
     }
@@ -2171,17 +2147,18 @@ sub OUTPUT_handler {
       next;
     }
 
+
+    $param->{in_output} = 1;
+    $param->{do_setmagic} = $outarg eq 'RETVAL'
+                              ? 0 # RETVAL never needs magic setting
+                              : $self->{xsub_SETMAGIC_state};
+    $param->{output_code} = $outcode if length $outcode;
+
     if ($outarg eq 'RETVAL') {
       # Postpone processing the RETVAL line to last (it's left to the
       # caller to finish).
-      $self->{xsub_RETVAL_typemap_code} = $outcode if length $outcode;
-      $self->{xsub_seen_RETVAL_in_OUTPUT} = 1;
       next;
     }
-
-    $param->{in_output} = 1;
-    $param->{do_setmagic} = $self->{xsub_SETMAGIC_state};
-    $param->{output_code} = $outcode if length $outcode;
 
     $self->generate_output($param);
   } # foreach line in OUTPUT block
@@ -3157,6 +3134,11 @@ sub generate_output {
 
   my ($type, $num, $var, $do_setmagic, $output_code)
     = @{$param}{qw(type arg_num var do_setmagic output_code)};
+
+  # RETVAL normally has an undefined arg_num, although it can be
+  # set to a real index if RETVAL is also declared as a parameter.
+  # But when returning its value, it's always stored at ST(0).
+  $num = 1 if $var eq 'RETVAL';
 
   unless (defined $type) {
     $self->blurt("Can't determine output type for '$var'");
