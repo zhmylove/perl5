@@ -1078,8 +1078,8 @@ our %Modules = (
     },
 
     'Term::Table' => {
-        'DISTRIBUTION' => 'EXODIST/Term-Table-0.022.tar.gz',
-        'SYNCINFO'     => 'jkeenan on Wed Aug 14 21:27:04 2024',
+        'DISTRIBUTION' => 'EXODIST/Term-Table-0.023.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Sun Nov 10 18:18:57 2024',
         'FILES'        => q[cpan/Term-Table],
         'EXCLUDED'     => [
             qw( appveyor.yml ),
