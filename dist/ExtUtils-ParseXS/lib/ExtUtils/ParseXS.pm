@@ -1145,7 +1145,8 @@ EOF
 
           if ($self->{xsub_return_type} ne "void") {
             print "RETVAL = ";
-            $implicit_OUTPUT_RETVAL = 1;
+            # There's usually an implied 'OUTPUT: RETVAL' in bodiless XSUBs
+            $implicit_OUTPUT_RETVAL = 1 unless $self->{xsub_seen_NO_OUTPUT};
           }
 
           if (defined($self->{xsub_class})) {
@@ -1191,14 +1192,6 @@ EOF
       # Next, process any POSTCALL or OUTPUT blocks,
       # plus some post-processing of OUTPUT.
       # ----------------------------------------------------------------
-
-      # If SXUB was declared as NO_OUTPUT, then:
-      # - we don't need to return RETVAL to the caller, even if the
-      #   auto-generated call to the library function indicates it was seen
-      #   ($implicit_OUTPUT_RETVAL).
-      # - Also from this point on, treat the (non-void) return type as void.
-      ($implicit_OUTPUT_RETVAL, $self->{xsub_return_type}) =
-                                  (0, 'void') if $self->{xsub_seen_NO_OUTPUT};
 
       # Process as many keyword lines/blocks as can be found which match
       # the pattern.
@@ -1256,7 +1249,8 @@ EOF
           $self->generate_output($retval);
         }
 
-      $XSRETURN_count = 1 if $self->{xsub_return_type} ne "void";
+      $XSRETURN_count = 1 if     $self->{xsub_return_type} ne "void"
+                             && !$self->{xsub_seen_NO_OUTPUT};
       my $num = $XSRETURN_count;
       $XSRETURN_count += $outlist_count;
 
@@ -2137,12 +2131,12 @@ sub OUTPUT_handler {
       next;
     }
 
-    my $var_num = ($outarg eq "RETVAL" && $self->{xsub_return_type} ne "void")
-                    ? 0
-                    : $param ? $param->{arg_num}
-                             : undef;
-
-    unless (defined $var_num) {
+    if (   !$param  # no such param or, for RETVAL, RETVAL was void
+        or ($outarg eq "RETVAL"
+               ? $self->{xsub_seen_NO_OUTPUT} # mustn't return in this case
+               : !$param->{arg_num}) # not bound to an arg which can be updated
+       )
+    {
       $self->blurt("Error: OUTPUT $outarg not a parameter");
       next;
     }

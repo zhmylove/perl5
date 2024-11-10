@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 400;
+use Test::More tests => 423;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1922,6 +1922,21 @@ EOF
         ],
 
         [
+            # This one *shouldn't* warn. For a void XSUB, RETVAL
+            # is just another local variable.
+            "void RETVAL in CODE without OUTPUT section",
+            [ Q(<<'EOF') ],
+                |void
+                |foo()
+                |    PREINIT:
+                |      int RETVAL;
+                |    CODE:
+                |      RETVAL = 99
+EOF
+            [ 1, 1, qr/Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section/, "no warn" ],
+        ],
+
+        [
             "RETVAL in CODE without being in OUTPUT",
             [ Q(<<'EOF') ],
                 |int
@@ -2325,6 +2340,32 @@ EOF
         ],
 
         [
+            # NO_OUTPUT with void should be a NOOP, but check
+            "NO_OUTPUT void autocall",
+            [ Q(<<'EOF') ],
+                |NO_OUTPUT void
+                |foo(int abc)
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc"\)/,        "usage" ],
+            [ 0, 1, qr/\s+RETVAL;/,                   "don't declare RETVAL" ],
+            [ 0, 0, qr/int\s+abc\s*=.*\QST(0)/,       "abc is ST0" ],
+            [ 0, 0, qr/^\s*foo\(abc\)/m,              "void autocall" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,           "ret empty" ],
+        ],
+
+        [
+            "NO_OUTPUT with RETVAL autocall",
+            [ Q(<<'EOF') ],
+                |NO_OUTPUT long
+                |foo(int RETVAL)
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL"\)/,     "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=/,           "declare and init" ],
+            [ 0, 0, qr/\bRETVAL\s*=\s*foo\(RETVAL\)/, "autocall" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,           "ret empty" ],
+        ],
+
+        [
             "NO_OUTPUT with CODE",
             [ Q(<<'EOF') ],
                 |NO_OUTPUT long
@@ -2339,10 +2380,63 @@ EOF
         ],
 
         [
+            # NO_OUTPUT with void should be a NOOP, but check
+            "NO_OUTPUT void with CODE",
+            [ Q(<<'EOF') ],
+                |NO_OUTPUT void
+                |foo(int abc)
+                |   CODE:
+                |      xyz
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc"\)/,        "usage" ],
+            [ 0, 1, qr/\s+RETVAL;/,                   "don't declare RETVAL" ],
+            [ 0, 0, qr/int\s+abc\s*=.*\QST(0)/,       "abc is ST0" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,           "ret empty" ],
+        ],
+
+        [
+            "NO_OUTPUT with RETVAL and CODE",
+            [ Q(<<'EOF') ],
+                |NO_OUTPUT long
+                |foo(int RETVAL)
+                |   CODE:
+                |      xyz
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"RETVAL"\)/,     "usage" ],
+            [ 0, 0, qr/\bint\s+RETVAL\s*=/,           "declare and init" ],
+            [ 0, 0, qr/\bXSRETURN_EMPTY\b/,           "ret empty" ],
+        ],
+
+
+        [
             "NO_OUTPUT with CODE and OUTPUT",
             [ Q(<<'EOF') ],
                 |NO_OUTPUT long
                 |foo(int abc)
+                |   CODE:
+                |      xyz
+                |   OUTPUT:
+                |      RETVAL
+EOF
+            [ 1, 0, qr/Error: OUTPUT RETVAL not a parameter/,  "OUTPUT err" ],
+        ],
+
+        [
+            "NO_OUTPUT with RETVAL param and OUTPUT",
+            [ Q(<<'EOF') ],
+                |NO_OUTPUT long
+                |foo(int RETVAL)
+                |   OUTPUT:
+                |      RETVAL
+EOF
+            [ 1, 0, qr/Error: OUTPUT RETVAL not a parameter/,  "OUTPUT err" ],
+        ],
+
+        [
+            "NO_OUTPUT with RETVAL param, CODE and OUTPUT",
+            [ Q(<<'EOF') ],
+                |NO_OUTPUT long
+                |foo(int RETVAL)
                 |   CODE:
                 |      xyz
                 |   OUTPUT:
