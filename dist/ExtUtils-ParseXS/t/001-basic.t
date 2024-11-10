@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 391;
+use Test::More tests => 400;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -2410,6 +2410,65 @@ EOF
             [ 1, 0, qr/Error: duplicate definition of parameter 'RETVAL'/,  "" ],
         ],
 
+
+    );
+
+    test_many($preamble, 'XS_Foo_', \@test_fns);
+}
+
+{
+    # Test RETVAL return mixed types.
+    # Where the return type of the XSUB differs from the declared type
+    # of the RETVAL var. For backwards compatibility, we should use the
+    # XSUB type when returning.
+
+    my $preamble = Q(<<'EOF');
+        |MODULE = Foo PACKAGE = Foo
+        |
+        |PROTOTYPES:  DISABLE
+        |
+        |TYPEMAP: <<EOF
+        |my_type    T_MY_TYPE
+        |
+        |OUTPUT
+        |T_MY_TYPE
+        |    sv_set_my_type($arg, (my_type)$var);
+        |EOF
+EOF
+
+    my @test_fns = (
+
+        [
+            "RETVAL mixed type",
+            [ Q(<<'EOF') ],
+                |my_type
+                |foo(int RETVAL)
+EOF
+            [ 0, 0, qr/int\s+RETVAL\s*=.*SvIV\b/,  "RETVAL is int" ],
+            [ 0, 0, qr/sv_set_my_type\(/,          "return is my_type" ],
+        ],
+
+        [
+            "RETVAL mixed type INPUT",
+            [ Q(<<'EOF') ],
+                |my_type
+                |foo(RETVAL)
+                |    int RETVAL
+EOF
+            [ 0, 0, qr/int\s+RETVAL\s*=.*SvIV\b/,  "RETVAL is int" ],
+            [ 0, 0, qr/sv_set_my_type\(/,          "return is my_type" ],
+        ],
+
+        [
+            "RETVAL mixed type alien",
+            [ Q(<<'EOF') ],
+                |my_type
+                |foo()
+                |  int RETVAL = 99;
+EOF
+            [ 0, 0, qr/int\s+RETVAL\s*=\s*99/,     "RETVAL is int" ],
+            [ 0, 0, qr/sv_set_my_type\(/,          "return is my_type" ],
+        ],
 
     );
 

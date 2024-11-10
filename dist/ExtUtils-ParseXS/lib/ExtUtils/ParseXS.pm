@@ -3135,10 +3135,21 @@ sub generate_output {
   my ($type, $num, $var, $do_setmagic, $output_code)
     = @{$param}{qw(type arg_num var do_setmagic output_code)};
 
-  # RETVAL normally has an undefined arg_num, although it can be
-  # set to a real index if RETVAL is also declared as a parameter.
-  # But when returning its value, it's always stored at ST(0).
-  $num = 1 if $var eq 'RETVAL';
+  if ($var eq 'RETVAL') {
+    # RETVAL normally has an undefined arg_num, although it can be
+    # set to a real index if RETVAL is also declared as a parameter.
+    # But when returning its value, it's always stored at ST(0).
+    $num = 1;
+
+    # It is possible for RETVAL to have multiple types, e.g.
+    #     int
+    #     foo(long RETVAL)
+    #
+    # In the above, 'long' is used for the var's declaration, while
+    # 'int' is used to generate the return code (for backwards
+    # compatibility).
+    $type = $self->{xsub_return_type};
+  }
 
   unless (defined $type) {
     $self->blurt("Can't determine output type for '$var'");
