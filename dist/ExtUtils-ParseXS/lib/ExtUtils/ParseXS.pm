@@ -1201,68 +1201,67 @@ EOF
 
       {
         my $retval = $self->{xsub_sig}{names}{RETVAL};
-      #
-      # A CODE section using RETVAL must also have an OUTPUT entry
-      if (        $self->{xsub_seen_RETVAL_in_CODE}
-          and not ($retval && $retval->{in_output})
-          and     $self->{xsub_return_type} ne 'void')
-      {
-        $self->Warn("Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section.");
-      }
 
-      # Process any OUT vars: i.e. vars that are declared OUT in
-      # the XSUB's signature rather than in an OUTPUT section.
-
-      for my $param (
-              grep {
-                     defined $_->{in_out}
-                  && $_->{in_out} =~ /OUT$/
-                  && !$_->{in_output}
-              }
-              @{ $self->{xsub_sig}{params}})
-      {
-        $self->generate_output($param);
-      }
-
-      # If there are any OUTLIST vars to be pushed, first extend the
-      # stack, to fit all OUTLIST vars + RETVAL
-      my $outlist_count = grep {    defined $_->{in_out}
-                                 && $_->{in_out} =~ /OUTLIST$/
-                               }
-                               @{$self->{xsub_sig}{params}};
-      if ($outlist_count) {
-        my $ext = $outlist_count;
-        ++$ext if ($retval && $retval->{in_output}) || $implicit_OUTPUT_RETVAL;
-        print "\tXSprePUSH;";
-        print "\tEXTEND(SP,$ext);\n";
-      }
-
-      # ----------------------------------------------------------------
-      # All OUTPUT done; now handle an implicit or deferred RETVAL.
-      # OUTPUT_handler() will have skipped any RETVAL line.
-      # Also, $implicit_OUTPUT_RETVAL indicates that an implicit RETVAL
-      # should be generated, due to a non-void CODE-less XSUB.
-      # ----------------------------------------------------------------
-
-        if (($retval && $retval->{in_output}) || $implicit_OUTPUT_RETVAL) {
-          # emit a deferred RETVAL from OUTPUT or implicit RETVAL
-          $self->generate_output($retval);
+        # A CODE section using RETVAL must also have an OUTPUT entry
+        if (        $self->{xsub_seen_RETVAL_in_CODE}
+            and not ($retval && $retval->{in_output})
+            and     $self->{xsub_return_type} ne 'void')
+        {
+          $self->Warn("Warning: Found a 'CODE' section which seems to be using 'RETVAL' but no 'OUTPUT' section.");
         }
 
-      $XSRETURN_count = 1 if     $self->{xsub_return_type} ne "void"
-                             && !$self->{xsub_seen_NO_OUTPUT};
-      my $num = $XSRETURN_count;
-      $XSRETURN_count += $outlist_count;
+        # Process any OUT vars: i.e. vars that are declared OUT in
+        # the XSUB's signature rather than in an OUTPUT section.
 
-      # Now that RETVAL is on the stack, also push any OUTLIST vars too
-      for my $param (grep  {    defined $_->{in_out}
-                             && $_->{in_out} =~ /OUTLIST$/
-                           }
-                           @{$self->{xsub_sig}{params}}
-      ) {
-        $self->generate_output($param, $num++);
-      }
+        for my $param (
+                grep {
+                       defined $_->{in_out}
+                    && $_->{in_out} =~ /OUT$/
+                    && !$_->{in_output}
+                }
+                @{ $self->{xsub_sig}{params}})
+        {
+          $self->generate_output($param);
+        }
 
+        # If there are any OUTLIST vars to be pushed, first extend the
+        # stack, to fit all OUTLIST vars + RETVAL
+        my $outlist_count = grep {    defined $_->{in_out}
+                                   && $_->{in_out} =~ /OUTLIST$/
+                                 }
+                                 @{$self->{xsub_sig}{params}};
+        if ($outlist_count) {
+          my $ext = $outlist_count;
+          ++$ext if ($retval && $retval->{in_output}) || $implicit_OUTPUT_RETVAL;
+          print "\tXSprePUSH;";
+          print "\tEXTEND(SP,$ext);\n";
+        }
+
+        # ----------------------------------------------------------------
+        # All OUTPUT done; now handle an implicit or deferred RETVAL.
+        # OUTPUT_handler() will have skipped any RETVAL line.
+        # Also, $implicit_OUTPUT_RETVAL indicates that an implicit RETVAL
+        # should be generated, due to a non-void CODE-less XSUB.
+        # ----------------------------------------------------------------
+
+          if (($retval && $retval->{in_output}) || $implicit_OUTPUT_RETVAL) {
+            # emit a deferred RETVAL from OUTPUT or implicit RETVAL
+            $self->generate_output($retval);
+          }
+
+        $XSRETURN_count = 1 if     $self->{xsub_return_type} ne "void"
+                               && !$self->{xsub_seen_NO_OUTPUT};
+        my $num = $XSRETURN_count;
+        $XSRETURN_count += $outlist_count;
+
+        # Now that RETVAL is on the stack, also push any OUTLIST vars too
+        for my $param (grep  {    defined $_->{in_out}
+                               && $_->{in_out} =~ /OUTLIST$/
+                             }
+                             @{$self->{xsub_sig}{params}}
+        ) {
+          $self->generate_output($param, $num++);
+        }
       }
 
 
