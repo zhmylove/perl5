@@ -2418,7 +2418,7 @@ EOF
                 |   OUTPUT:
                 |      RETVAL
 EOF
-            [ 1, 0, qr/Error: OUTPUT RETVAL not a parameter/,  "OUTPUT err" ],
+            [ 1, 0, qr/Error: can't use RETVAL in OUTPUT when NO_OUTPUT declared/,  "OUTPUT err" ],
         ],
 
         [
@@ -2429,7 +2429,7 @@ EOF
                 |   OUTPUT:
                 |      RETVAL
 EOF
-            [ 1, 0, qr/Error: OUTPUT RETVAL not a parameter/,  "OUTPUT err" ],
+            [ 1, 0, qr/Error: can't use RETVAL in OUTPUT when NO_OUTPUT declared/,  "OUTPUT err" ],
         ],
 
         [
@@ -2442,7 +2442,7 @@ EOF
                 |   OUTPUT:
                 |      RETVAL
 EOF
-            [ 1, 0, qr/Error: OUTPUT RETVAL not a parameter/,  "OUTPUT err" ],
+            [ 1, 0, qr/Error: can't use RETVAL in OUTPUT when NO_OUTPUT declared/,  "OUTPUT err" ],
         ],
 
 

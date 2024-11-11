@@ -2119,11 +2119,14 @@ sub OUTPUT_handler {
       next;
     }
 
+    if ($outarg eq "RETVAL" and $self->{xsub_seen_NO_OUTPUT}) {
+      $self->blurt("Error: can't use RETVAL in OUTPUT when NO_OUTPUT declared");
+      next;
+    }
+
     if (   !$param  # no such param or, for RETVAL, RETVAL was void
-        or ($outarg eq "RETVAL"
-               ? $self->{xsub_seen_NO_OUTPUT} # mustn't return in this case
-               : !$param->{arg_num}) # not bound to an arg which can be updated
-       )
+           # not bound to an arg which can be updated
+        or $outarg ne "RETVAL" && !$param->{arg_num})
     {
       $self->blurt("Error: OUTPUT $outarg not a parameter");
       next;
