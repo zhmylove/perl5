@@ -164,7 +164,7 @@ sub as_code {
     my ($type, $arg_num, $var, $init, $no_init, $defer, $default)
         = @{$self}{qw(type arg_num var init no_init defer default)};
   
-    my $arg = $pxs->ST($arg_num, 0);
+    my $arg = $pxs->ST($arg_num);
   
     if ($self->{is_length}) {
         # Process length(foo) parameter.

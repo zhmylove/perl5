@@ -1876,13 +1876,7 @@ sub CASE_handler {
 #
 #   "ST(". $num - 1 . ")"
 #
-# but with subtleties when $num is 0 or undef.
-# Gathering all such uses into one place helps in documenting the totality.
-#
-# Normally parameter names are mapped to index numbers 1,2,... . In
-# addition, in *OUTPUT* processing only, 'RETVAL' is mapped to 0.
-#
-# Finally, in input processing it is legal to have a parameter with a
+# except that in input processing it is legal to have a parameter with a
 # typemap override, but where the parameter isn't in the signature. People
 # misuse this to declare other variables which should really be in a
 # PREINIT section:
@@ -1897,13 +1891,8 @@ sub CASE_handler {
 # shouldn't emit a warning when generating "ST(N-1)".
 #
 sub ST {
-  my ($self, $num, $is_output) = @_;
-
-  if (defined $num) {
-    return "ST(0)"                if $is_output && $num == 0;
-    return "ST(" . ($num-1) . ")" if $num >= 1;
-    $self->Warn("Internal error: unexpected zero num in ST()");
-  }
+  my ($self, $num) = @_;
+  return "ST(" . ($num-1) . ")" if defined $num;
   return '/* not a parameter */';
 }
 
@@ -3149,7 +3138,7 @@ sub generate_output {
     return;
   }
 
-  my $arg = $self->ST($num, 1);
+  my $arg = $self->ST($num);
 
   my $typemaps = $self->{typemaps_object};
 
@@ -3490,7 +3479,7 @@ sub generate_output {
     # Indicates that this is an OUTLIST value, so an SV with the value
     # should be pushed onto the stack
     print "\tPUSHs(sv_newmortal());\n";
-    $eval_vars->{arg} = $self->ST($out_num + 1, 1);
+    $eval_vars->{arg} = $self->ST($out_num + 1);
     print $self->eval_output_typemap_code("qq\a$expr\a", $eval_vars);
   }
 
