@@ -958,6 +958,16 @@ EOF
     # #if, #else, #endif etc within the XSUB should balance out.
     check_conditional_preprocessor_statements();
 
+    # Save a deep copy the params created from parsing the signature.
+    # See the comments below starting "For each CASE" for details.
+
+    $self->{xsub_sig}{orig_params} = [];
+    for (@{$self->{xsub_sig}{params}}) {
+      my %h = %$_;
+      bless \%h, 'ExtUtils::ParseXS::Node::Param';
+      push @{$self->{xsub_sig}{orig_params}}, \%h;
+    }
+
     # ----------------------------------------------------------------
     # Each iteration of this loop will process 1 optional CASE: line,
     # followed by all the other blocks. In the absence of a CASE: line,
@@ -969,6 +979,27 @@ EOF
       # For a 'CASE: foo' line, emit an 'else if (foo)' style line of C.
       # Note that each CASE: can precede multiple keyword blocks.
       $self->CASE_handler($_) if $self->check_keyword("CASE");
+
+      # For each CASE, start with a fresh set of params based on the
+      # original parsing of the XSUB's signature. This is because each set
+      # of INPUT/OUTPUT blocks associated with each CASE may update the
+      # param objects in a different way.
+      #
+      # Note that $self->{xsub_sig}{names} provides a second set of
+      # references to most of these param objects; so the object hashes
+      # themselves must be preserved, and merely their contents emptied
+      # and repopulated each time. Hence also why creating the orig_params
+      # snapshot above must be a deep copy.
+      #
+      # XXX This is bit of a temporary hack.
+
+      for my $i (0.. @{$self->{xsub_sig}{orig_params}} - 1) {
+        my $op = $self->{xsub_sig}{orig_params}[$i];
+        my $p  = $self->{xsub_sig}{params}[$i];
+        %$p = ();
+        my @keys = sort keys %$op;
+        @$p{@keys} = @$op{@keys};
+      }
 
       # ----------------------------------------------------------------
       # Handle all the XSUB parts which generate declarations

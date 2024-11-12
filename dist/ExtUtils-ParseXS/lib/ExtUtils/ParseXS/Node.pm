@@ -456,8 +456,17 @@ BEGIN {
 
     our @FIELDS = (
         @ExtUtils::ParseXS::Node::FIELDS,
+        'orig_params',   # Array ref of Node::Param objects representing
+                         # the original (as parsed) parameters of this XSUB
+
         'params',        # Array ref of Node::Param objects representing
-                         # the parameters of this XSUB
+                         # the current parameters of this XSUB - this
+                         # is orig_params plus any updated fields from
+                         # processing INPUT and OUTPUT lines. Note that
+                         # with multiple CASE: blocks, there can be
+                         # multiple sets of INPUT and OUTPUT etc blocks.
+                         # params is reset to the contents of orig_params
+                         # after the start of each new CASE: block.
 
         'names',         # Hash ref mapping variable names to Node::Param
                          # objects

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 423;
+use Test::More tests => 435;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -104,7 +104,10 @@ sub test_many {
         # test diagnostics smaller.
         if ($out =~ /\S/) {
             $out =~ s/\A.*? (^\w+\(${prefix} .*? ^}).*\z/$1/xms
-                or die "couldn't trim output for fn '$prefix'";
+                or do {
+                    # print STDERR $out;
+                    die "$desc_prefix: couldn't trim output to only function starting '$prefix'\n";
+                }
         }
 
         my $err_tested;
@@ -2563,6 +2566,103 @@ EOF
             [ 0, 0, qr/int\s+RETVAL\s*=\s*99/,     "RETVAL is int" ],
             [ 0, 0, qr/sv_set_my_type\(/,          "return is my_type" ],
         ],
+
+    );
+
+    test_many($preamble, 'XS_Foo_', \@test_fns);
+}
+
+{
+    # Test CASE: blocks
+
+    my $preamble = Q(<<'EOF');
+        |MODULE = Foo PACKAGE = Foo
+        |
+        |PROTOTYPES:  DISABLE
+        |
+EOF
+
+    my @test_fns = (
+
+        [
+            "CASE with dup INPUT and OUTPUT",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(abc, def)
+                |    CASE: X
+                |            int   abc;
+                |            short def;
+                |        CODE:
+                |            RETVAL = abc + def;
+                |        OUTPUT:
+                |            RETVAL
+                |
+                |    CASE: Y
+                |            long abc;
+                |            long def;
+                |        CODE:
+                |            RETVAL = abc - def;
+                |        OUTPUT:
+                |            RETVAL
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"abc, def"\)/,     "usage" ],
+
+            [ 0, 0, qr/
+                       if \s* \(X\)
+                       .*
+                       int \s+ abc \s* = [^\n]* ST\(0\)
+                       .*
+                       else \s+ if \s* \(Y\)
+                      /xs,                       "1st abc is int and ST(0)" ],
+            [ 0, 0, qr/
+                       else \s+ if \s* \(Y\)
+                       .*
+                       long \s+ abc \s* = [^\n]* ST\(0\)
+                      /xs,                       "2nd abc is long and ST(0)" ],
+            [ 0, 0, qr/
+                       if \s* \(X\)
+                       .*
+                       short \s+ def \s* = [^\n]* ST\(1\)
+                       .*
+                       else \s+ if \s* \(Y\)
+                      /xs,                       "1st def is short and ST(1)" ],
+            [ 0, 0, qr/
+                       else \s+ if \s* \(Y\)
+                       .*
+                       long \s+ def \s* = [^\n]* ST\(1\)
+                      /xs,                       "2nd def is long and ST(1)" ],
+            [ 0, 0, qr/
+                       if \s* \(X\)
+                       .*
+                       int \s+ RETVAL;
+                       .*
+                       else \s+ if \s* \(Y\)
+                      /xs,                       "1st RETVAL is int" ],
+            [ 0, 0, qr/
+                       else \s+ if \s* \(Y\)
+                       .*
+                       int \s+ RETVAL;
+                       .*
+                      /xs,                       "2nd RETVAL is int" ],
+
+            [ 0, 0, qr/
+                       if \s* \(X\)
+                       .*
+                       \QRETVAL = abc + def;\E
+                       .*
+                       else \s+ if \s* \(Y\)
+                      /xs,                       "1st RETVAL assign" ],
+            [ 0, 0, qr/
+                       else \s+ if \s* \(Y\)
+                       .*
+                       \QRETVAL = abc - def;\E
+                       .*
+                      /xs,                       "2nd RETVAL assign" ],
+
+            [ 0, 0, qr/\b\QXSRETURN(1)/,           "ret 1" ],
+            [ 0, 1, qr/\bXSRETURN\b.*\bXSRETURN/s, "only a single XSRETURN" ],
+        ],
+
 
     );
 

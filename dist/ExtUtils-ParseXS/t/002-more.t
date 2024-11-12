@@ -76,9 +76,7 @@ SKIP: {
   is prototype(\&XSMore::attr_method), '$;@', 'ATTRS with prototype';
 
   is XSMore::return_1(), 1, 'the CASE keyword (1)';
-  # XXX tmp disable test
-  #is XSMore::return_2(), 2, 'the CASE keyword (2)';
-  pass('the CASE keyword (2)');
+  is XSMore::return_2(), 2, 'the CASE keyword (2)';
   is prototype(\&XSMore::return_1), "", 'ALIAS with prototype (1)';
   is prototype(\&XSMore::return_2), "", 'ALIAS with prototype (2)';
 
