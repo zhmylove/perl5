@@ -628,7 +628,6 @@ our %Modules = (
         'SYNCINFO'     => 'tib on Tue Nov 12 16:59:11 2024',
         'FILES'        => q[cpan/HTTP-Tiny],
         'EXCLUDED'     => [
-            'corpus/snake-oil.crt', # only used by 210_live_ssl.t
             't/00-report-prereqs.t',
             't/00-report-prereqs.dd',
             't/200_live.t',
