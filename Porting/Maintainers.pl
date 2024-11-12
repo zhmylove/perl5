@@ -624,8 +624,8 @@ our %Modules = (
     },
 
     'HTTP::Tiny' => {
-        'DISTRIBUTION' => 'DAGOLDEN/HTTP-Tiny-0.088.tar.gz',
-        'SYNCINFO'     => 'jkeenan on Sat Aug 12 14:49:17 2023',
+        'DISTRIBUTION' => 'HAARG/HTTP-Tiny-0.090.tar.gz',
+        'SYNCINFO'     => 'tib on Tue Nov 12 16:59:11 2024',
         'FILES'        => q[cpan/HTTP-Tiny],
         'EXCLUDED'     => [
             'corpus/snake-oil.crt', # only used by 210_live_ssl.t

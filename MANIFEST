@@ -1176,6 +1176,7 @@ cpan/HTTP-Tiny/corpus/form-02.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/form-03.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/form-04.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/form-05.txt	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/corpus/form-06.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/get-01.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/get-02.txt	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/corpus/get-03.txt	Test file related to HTTP::Tiny
@@ -1259,6 +1260,7 @@ cpan/HTTP-Tiny/t/161_basic_auth.t	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/t/162_proxy_auth.t	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/t/170_keepalive.t	Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/t/180_verify_SSL.t	Test file related to HTTP::Tiny
+cpan/HTTP-Tiny/t/190_find_CA.t		Test file related to HTTP::Tiny
 cpan/HTTP-Tiny/t/BrokenCookieJar.pm	Module related to HTTP::Tiny
 cpan/HTTP-Tiny/t/SimpleCookieJar.pm	Module related to HTTP::Tiny
 cpan/HTTP-Tiny/t/Util.pm		Module related to HTTP::Tiny

@@ -1,18 +1,18 @@
 url
   http://example.com/new
 content
-  bar|baz|ack|foo
+  key|value|multi|worb|multi|gluff|another|blof|another|plog
 datatype
-  ARRAY
+  HASH
 ----------
 POST /new HTTP/1.1
 Host: example.com
 Connection: close
 User-Agent: HTTP-Tiny/VERSION
 Content-Type: application/x-www-form-urlencoded
-Content-Length: 15
+Content-Length: 58
 
-bar=baz&ack=foo
+another=blof&another=plog&key=value&multi=worb&multi=gluff
 ----------
 HTTP/1.1 201 Created
 Date: Thu, 03 Feb 1994 00:00:00 GMT
