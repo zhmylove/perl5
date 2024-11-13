@@ -70,7 +70,7 @@ sub new {
         %$self = %$args;
     }
     else {
-        $self = bless $args => $class;
+        $self = bless { %$args } => $class;
     }
     return $self;
 }

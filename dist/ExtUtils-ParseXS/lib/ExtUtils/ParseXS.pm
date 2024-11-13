@@ -963,9 +963,8 @@ EOF
 
     $self->{xsub_sig}{orig_params} = [];
     for (@{$self->{xsub_sig}{params}}) {
-      my %h = %$_;
-      bless \%h, 'ExtUtils::ParseXS::Node::Param';
-      push @{$self->{xsub_sig}{orig_params}}, \%h;
+      push @{$self->{xsub_sig}{orig_params}},
+        ExtUtils::ParseXS::Node::Param->new($_);
     }
 
     # ----------------------------------------------------------------
