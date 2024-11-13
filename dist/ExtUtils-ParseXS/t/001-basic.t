@@ -1758,11 +1758,11 @@ EOF
             ],
             [ 0, 0, qr/\bdXSTARG;/,      "has targ def" ],
             [ 0, 0, qr/\bXSprePUSH;/,    "has XSprePUSH" ],
-            [ 0, 1, qr/\bXSprePUSH\b.*\bXSprePUSH\b*/s,
+            [ 0, 1, qr/\bXSprePUSH\b.+\bXSprePUSH\b/s,
                                          "has only one XSprePUSH" ],
 
             [ 0, 0, qr/\bPUSHi\b/,       "has PUSHi" ],
-            [ 0, 0, qr/\bPUSHs\b.*\bPUSHs\b*/s,
+            [ 0, 0, qr/\bPUSHs\b.+\bPUSHs\b/s,
                                          "has two PUSHs" ],
 
             [ 0, 0, qr/\bXSRETURN\(3\)/, "has XSRETURN(3)" ],
