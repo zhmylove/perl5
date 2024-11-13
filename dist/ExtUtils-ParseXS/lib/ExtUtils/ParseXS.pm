@@ -2008,7 +2008,7 @@ sub INPUT_handler {
       # synthetic params like THIS, which are assigned a provisional type
       # which can be overridden.
       if (   $param->{in_input}
-          or (!$param->{is_synthetic} and exists $param->{type})
+          or (!$param->{is_synthetic} and defined $param->{type})
       ) {
           $self->blurt(
             "Error: duplicate definition of parameter '$var_name' ignored");
