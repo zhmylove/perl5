@@ -1824,7 +1824,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
                         /* If we don't know for sure that the input length is
                          * valid, avoid as much as possible reading past the
                          * end of the buffer */
-                        int printlen = (flags & _UTF8_NO_CONFIDENCE_IN_CURLEN)
+                        int printlen = (flags & UTF8_NO_CONFIDENCE_IN_CURLEN_)
                                        ? (int) (s - s0)
                                        : (int) (send - s0);
                         pack_warn = packWARN(WARN_UTF8);
