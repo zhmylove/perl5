@@ -1616,8 +1616,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
                  * byte.  For surrogates we could just look at the bytes, but
                  * this single algorithm works for both those and supers. */
                 for (unsigned i = curlen; i < expectlen; i++) {
-                    uv = UTF8_ACCUMULATE(uv,
-                                I8_TO_NATIVE_UTF8(UTF_MIN_CONTINUATION_BYTE));
+                    uv = UTF8_ACCUMULATE(uv, UTF8_MIN_CONTINUATION_BYTE);
                 }
             }
 
