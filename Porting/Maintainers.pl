@@ -806,7 +806,8 @@ our %Modules = (
     },
 
     'Memoize' => {
-        'DISTRIBUTION' => 'ARISTOTLE/Memoize-1.16.tar.gz',
+        'DISTRIBUTION' => 'ARISTOTLE/Memoize-1.17.tar.gz',
+        'SYNCINFO'     => 'tib on Sun Nov 17 20:07:33 2024',
         'FILES'        => q[cpan/Memoize],
         'EXCLUDED'     => [ qr{^inc/} ],
     },
