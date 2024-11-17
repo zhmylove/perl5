@@ -408,7 +408,8 @@ manager will later use a regex to expand these into links.
 
 =item *
 
-XXX
+Builds with C<-msse> and quadmath on 32-bit x86 systems would crash
+with a misaligned access early in the build. [GH #22577]
 
 =back
 
