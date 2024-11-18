@@ -1673,6 +1673,39 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
             *msgs = NULL;
         }
 
+
+        /* Returns 0 if no message needs to be generated for this problem even
+         * if everything else says to.  Otherwise returns the warning category
+         * to use for the message.
+         *
+         * No message need be generated if the UTF8_CHECK_ONLY flag has been
+         * set by the caller.  Otherwise, a message should be generated if
+         * either:
+         *  1)  the caller has furnished a structure into which messages should
+         *      be returned to it (so it itself can decide what to do); or
+         *  2)  warnings are enabled for either of the category parameters to the
+         *      macro.
+         *
+         * The 'warning' parameter is the higher priority warning category to
+         * check.  The macro calls ckWARN_d(warning), so warnings for it are
+         * considered to be on by default.
+         *
+         * The second, lower priority category is optional.  To specify not to
+         * use one, call the macro
+         * like:            NEED_MESSAGE(WARN_FOO,,)
+         * Otherwise like:  NEED_MESSAGE(WARN_FOO, ckWARN_d, WARN_BAR)
+         *
+         * The second parameter could also have been ckWARN to specify that the
+         * second category isn't on by default.
+         *
+         * When called without a second category, the macro outputs a bunch of
+         * zeroes that the compiler should fold to nothing */
+#define NEED_MESSAGE(warning, extra_ckWARN, extra_category)             \
+            ((flags & UTF8_CHECK_ONLY)         ? 0                 :    \
+            ((ckWARN_d(warning))               ? warning           :    \
+            ((extra_ckWARN(extra_category +0)) ? extra_category +0 :    \
+            ((msgs)                            ? warning           : 0))))
+
         while (possible_problems) { /* Handle each possible problem */
             U32 pack_warn = 0;
             char * message = NULL;
@@ -1722,29 +1755,24 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
                     ||  (flags & (UTF8_WARN_SUPER|UTF8_WARN_PERL_EXTENDED)))
                 {
 
-                    /* The warnings code explicitly says it doesn't handle the
-                     * case of packWARN2 and two categories which have
-                     * parent-child relationship.  Even if it works now to
-                     * raise the warning if either is enabled, it wouldn't
-                     * necessarily do so in the future.  We output (only) the
-                     * most dire warning */
-                    if (! (flags & UTF8_CHECK_ONLY)) {
-                        if (ckWARN_d(WARN_UTF8)) {
-                            pack_warn = packWARN(WARN_UTF8);
-                        }
-                        else if (ckWARN_d(WARN_NON_UNICODE)) {
-                            pack_warn = packWARN(WARN_NON_UNICODE);
-                        }
-                        else if (msgs) {
-                            pack_warn = packWARN(WARN_UTF8);
-                        }
-
-                        if (pack_warn) {
-                            message = Perl_form(aTHX_ "%s: %s (overflows)",
+                    /* Overflow is a hybrid. If the word size on this platform
+                     * were wide enough for this to not overflow, a non-Unicode
+                     * code point would have been generated.  If the caller
+                     * wanted warnings for such code points, the warning
+                     * category would be WARN_NON_UNICODE, On the other hand,
+                     * overflow is considered a malformation, which is serious,
+                     * and the category would be just WARN_UTF8.  We clearly
+                     * should warn if either category is enabled, but which
+                     * category to use?  Historically, we've used 'utf8' if it
+                     * is enabled; and that seems like the more severe
+                     * category, more befitting a malformation. */
+                    pack_warn = NEED_MESSAGE(WARN_UTF8,
+                                             ckWARN_d, WARN_NON_UNICODE);
+                    if (pack_warn) {
+                        message = Perl_form(aTHX_ "%s: %s (overflows)",
                                             malformed_text,
                                             _byte_dump_string(s0, curlen, 0));
-                            this_flag_bit = UTF8_GOT_OVERFLOW;
-                        }
+                        this_flag_bit = UTF8_GOT_OVERFLOW;
                     }
                 }
 
@@ -1761,9 +1789,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
                     assert(0);
 
                     disallowed = TRUE;
-                    if (  (msgs
-                        || ckWARN_d(WARN_UTF8)) && ! (flags & UTF8_CHECK_ONLY))
-                    {
+                    if (NEED_MESSAGE(WARN_UTF8,,)) {
                         pack_warn = packWARN(WARN_UTF8);
                         message = Perl_form(aTHX_ "%s (empty string)",
                                                    malformed_text);
@@ -1778,9 +1804,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
 
                 if (! (flags & UTF8_ALLOW_CONTINUATION)) {
                     disallowed = TRUE;
-                    if ((   msgs
-                         || ckWARN_d(WARN_UTF8)) && ! (flags & UTF8_CHECK_ONLY))
-                    {
+                    if (NEED_MESSAGE(WARN_UTF8,,)) {
                         pack_warn = packWARN(WARN_UTF8);
                         message = Perl_form(aTHX_
                                 "%s: %s (unexpected continuation byte 0x%02x,"
@@ -1799,9 +1823,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
 
                 if (! (flags & UTF8_ALLOW_SHORT)) {
                     disallowed = TRUE;
-                    if ((   msgs
-                         || ckWARN_d(WARN_UTF8)) && ! (flags & UTF8_CHECK_ONLY))
-                    {
+                    if (NEED_MESSAGE(WARN_UTF8,,)) {
                         pack_warn = packWARN(WARN_UTF8);
                         message = Perl_form(aTHX_
                              "%s: %s (too short; %d byte%s available, need %d)",
@@ -1822,9 +1844,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
 
                 if (! (flags & UTF8_ALLOW_NON_CONTINUATION)) {
                     disallowed = TRUE;
-                    if ((   msgs
-                         || ckWARN_d(WARN_UTF8)) && ! (flags & UTF8_CHECK_ONLY))
-                    {
+                    if (NEED_MESSAGE(WARN_UTF8,,)) {
 
                         /* If we don't know for sure that the input length is
                          * valid, avoid as much as possible reading past the
@@ -1849,9 +1869,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
                 if (flags & UTF8_WARN_SURROGATE) {
                     *errors |= UTF8_GOT_SURROGATE;
 
-                    if (   ! (flags & UTF8_CHECK_ONLY)
-                        && (msgs || ckWARN_d(WARN_SURROGATE)))
-                    {
+                    if (NEED_MESSAGE(WARN_SURROGATE,,)) {
                         pack_warn = packWARN(WARN_SURROGATE);
 
                         /* These are the only errors that can occur with a
@@ -1881,9 +1899,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
                 if (flags & UTF8_WARN_SUPER) {
                     *errors |= UTF8_GOT_SUPER;
 
-                    if (   ! (flags & UTF8_CHECK_ONLY)
-                        && (msgs || ckWARN_d(WARN_NON_UNICODE)))
-                    {
+                    if (NEED_MESSAGE(WARN_NON_UNICODE,,)) {
                         pack_warn = packWARN(WARN_NON_UNICODE);
 
                         if (orig_problems & UTF8_GOT_TOO_SHORT) {
@@ -1904,10 +1920,8 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
                  * and before possibly bailing out, so that the more dire
                  * warning will override the regular one. */
                 if (UNLIKELY(UTF8_IS_PERL_EXTENDED(s0))) {
-                    if (  ! (flags & UTF8_CHECK_ONLY)
-                        &&  (flags & (UTF8_WARN_PERL_EXTENDED|UTF8_WARN_SUPER))
-                        &&  (msgs || (   ckWARN_d(WARN_NON_UNICODE)
-                                      || ckWARN(WARN_PORTABLE))))
+                    if (   (flags & (UTF8_WARN_PERL_EXTENDED|UTF8_WARN_SUPER))
+                        && NEED_MESSAGE(WARN_NON_UNICODE, ckWARN, WARN_PORTABLE))
                     {
                         pack_warn = packWARN2(WARN_NON_UNICODE, WARN_PORTABLE);
 
@@ -1957,9 +1971,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
                 if (flags & UTF8_WARN_NONCHAR) {
                     *errors |= UTF8_GOT_NONCHAR;
 
-                    if (  ! (flags & UTF8_CHECK_ONLY)
-                        && (msgs || ckWARN_d(WARN_NONCHAR)))
-                    {
+                    if (NEED_MESSAGE(WARN_NONCHAR,,)) {
                         /* The code above should have guaranteed that we don't
                          * get here with errors other than overlong */
                         assert (! (orig_problems
@@ -1994,9 +2006,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
                 else {
                     disallowed = TRUE;
 
-                    if ((   msgs
-                         || ckWARN_d(WARN_UTF8)) && ! (flags & UTF8_CHECK_ONLY))
-                    {
+                    if (NEED_MESSAGE(WARN_UTF8,,)) {
                         pack_warn = packWARN(WARN_UTF8);
 
                         /* These error types cause 'uv' to be something that
