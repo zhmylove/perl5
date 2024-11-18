@@ -1209,7 +1209,7 @@ EOF
 
           my $sig  = $self->{xsub_sig};
           my $args = $sig->{auto_function_sig_override}; # C_ARGS
-          $args = $sig->C_func_signature()
+          $args = $sig->C_func_signature($self)
             unless defined $args;
           print "$self->{xsub_func_name}($args);\n";
 

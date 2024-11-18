@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 460;
+use Test::More tests => 472;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1639,6 +1639,16 @@ EOF
             ],
             [ 0, 0, qr/"\$\$;\$"/, ""  ],
         ],
+
+        [
+            "auto-generated proto with backcompat SV* placeholder",
+            [
+                'void',
+                'foo(int a, SV*, char *c = "")',
+                'C_ARGS: a, c',
+            ],
+            [ 0, 0, qr/"\$\$;\$"/, ""  ],
+        ],
     );
 
     test_many($preamble, 'boot_Foo', \@test_fns);
@@ -2778,6 +2788,45 @@ EOF
             [ 0, 0, qr/\bCCC\s*=\s*.*\Q(ST(2))/,              "CCC is ST(2)" ],
             [ 0, 1, qr/\bBBB;/,                               "no BBB decl" ],
             [ 0, 1, qr/\b888\s*;/,                            "no 888 usage" ],
+        ],
+
+        [
+            "placeholder: allow SV *",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, SV *, int CCC)
+                |   CODE:
+                |      XYZ;
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*\Q"AAA, SV *, CCC")/,    "usage" ],
+            [ 0, 0, qr/\bint\s+AAA\s*=\s*.*\Q(ST(0))/,        "AAA is ST(0)" ],
+            [ 0, 0, qr/\bint\s+CCC\s*=\s*.*\Q(ST(2))/,        "CCC is ST(2)" ],
+        ],
+
+        [
+            # Bodiless XSUBs can't use SV* as a placeholder ...
+            "placeholder: SV *, bodiless",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, SV    *, int CCC)
+EOF
+            [ 1, 0, qr/Error: parameter 'SV \*' not valid as a C argument/,
+                                                           "got arg err" ],
+        ],
+
+        [
+            # ... unless they use C_ARGS to define how the C fn should
+            # be called.
+            "placeholder: SV *, bodiless C_ARGS",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, SV    *, int CCC)
+                |    C_ARGS: AAA, CCC
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*\Q"AAA, SV *, CCC")/,    "usage" ],
+            [ 0, 0, qr/\bint\s+AAA\s*=\s*.*\Q(ST(0))/,        "AAA is ST(0)" ],
+            [ 0, 0, qr/\bint\s+CCC\s*=\s*.*\Q(ST(2))/,        "CCC is ST(2)" ],
+            [ 0, 0, qr/\bRETVAL\s*=\s*\Qfoo(AAA, CCC);/,      "autocall" ],
         ],
 
 

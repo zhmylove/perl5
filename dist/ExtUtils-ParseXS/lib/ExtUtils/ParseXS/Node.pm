@@ -687,7 +687,18 @@ sub parse {
                 /x;
 
         unless (defined $name) {
-            $pxs->blurt("Unparseable XSUB parameter: '$_'");
+            if (/^ SV \s* \* $/x) {
+                # special-case SV* as a placeholder for backwards
+                # compatibility.
+                push @{$self->{params}},
+                    ExtUtils::ParseXS::Node::Param->new( {
+                        var     => 'SV *',
+                        arg_num => ++$nargs,
+                    });
+            }
+            else {
+                $pxs->blurt("Unparseable XSUB parameter: '$_'");
+            }
             next;
         }
 
@@ -839,6 +850,7 @@ sub usage_string {
 
 sub C_func_signature {
     my ExtUtils::ParseXS::Node::Sig $self = shift;
+    my ExtUtils::ParseXS            $pxs  = shift;
 
     my @args;
     for my $param (@{$self->{params}}) {
@@ -850,6 +862,12 @@ sub C_func_signature {
 
         if ($param->{is_length}) {
             push @args, "XSauto_length_of_$param->{len_name}";
+            next;
+        }
+
+        if ($param->{var} eq 'SV *') {
+            #backcompat placeholder
+            $pxs->blurt("Error: parameter 'SV *' not valid as a C argument");
             next;
         }
 
