@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 435;
+use Test::More tests => 472;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -1631,11 +1631,21 @@ EOF
         ],
 
         [
-            # shady but legal
+            # shady but legal - placeholder
             "auto-generated proto with no type",
             [
                 'void',
                 'foo(a, b, c = 0)',
+            ],
+            [ 0, 0, qr/"\$\$;\$"/, ""  ],
+        ],
+
+        [
+            "auto-generated proto with backcompat SV* placeholder",
+            [
+                'void',
+                'foo(int a, SV*, char *c = "")',
+                'C_ARGS: a, c',
             ],
             [ 0, 0, qr/"\$\$;\$"/, ""  ],
         ],
@@ -2661,6 +2671,162 @@ EOF
 
             [ 0, 0, qr/\b\QXSRETURN(1)/,           "ret 1" ],
             [ 0, 1, qr/\bXSRETURN\b.*\bXSRETURN/s, "only a single XSRETURN" ],
+        ],
+
+
+    );
+
+    test_many($preamble, 'XS_Foo_', \@test_fns);
+}
+
+{
+    # Test placeholders - various semi-official ways to to mark an
+    # argument as 'unused'.
+
+    my $preamble = Q(<<'EOF');
+        |MODULE = Foo PACKAGE = Foo
+        |
+        |PROTOTYPES:  DISABLE
+        |
+EOF
+
+    my @test_fns = (
+
+        [
+            "placeholder: typeless param with CODE",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, BBB, int CCC)
+                |   CODE:
+                |      XYZ;
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"AAA, BBB, CCC"\)/,      "usage" ],
+            [ 0, 0, qr/\bint\s+AAA\s*=\s*.*\Q(ST(0))/,        "AAA is ST(0)" ],
+            [ 0, 0, qr/\bint\s+CCC\s*=\s*.*\Q(ST(2))/,        "CCC is ST(2)" ],
+            [ 0, 1, qr/\bBBB;/,                               "no BBB decl" ],
+        ],
+
+        [
+            "placeholder: typeless param bodiless",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, BBB, int CCC)
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"AAA, BBB, CCC"\)/,      "usage" ],
+            # Note that autocall uses the BBB var even though it isn't
+            # declared. It would be up to the coder to use C_ARGS, or add
+            # such a var via PREINIT.
+            [ 0, 0, qr/\bRETVAL\s*=\s*\Qfoo(AAA, BBB, CCC);/, "autocall" ],
+            [ 0, 0, qr/\bint\s+AAA\s*=\s*.*\Q(ST(0))/,        "AAA is ST(0)" ],
+            [ 0, 0, qr/\bint\s+CCC\s*=\s*.*\Q(ST(2))/,        "CCC is ST(2)" ],
+            [ 0, 1, qr/\bBBB;/,                               "no BBB decl" ],
+        ],
+
+        [
+            # this is the only IN/OUT etc one which works, since IN is the
+            # default.
+            "placeholder: typeless IN param with CODE",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, IN BBB, int CCC)
+                |   CODE:
+                |      XYZ;
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"AAA, BBB, CCC"\)/,      "usage" ],
+            [ 0, 0, qr/\bint\s+AAA\s*=\s*.*\Q(ST(0))/,        "AAA is ST(0)" ],
+            [ 0, 0, qr/\bint\s+CCC\s*=\s*.*\Q(ST(2))/,        "CCC is ST(2)" ],
+            [ 0, 1, qr/\bBBB;/,                               "no BBB decl" ],
+        ],
+
+
+        [
+            "placeholder: typeless OUT param with CODE",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, OUT BBB, int CCC)
+                |   CODE:
+                |      XYZ;
+EOF
+            [ 1, 0, qr/Can't determine output type for 'BBB'/, "got type err" ],
+        ],
+
+        [
+            "placeholder: typeless IN_OUT param with CODE",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, IN_OUT BBB, int CCC)
+                |   CODE:
+                |      XYZ;
+EOF
+            [ 1, 0, qr/Can't determine output type for 'BBB'/, "got type err" ],
+        ],
+
+        [
+            "placeholder: typeless OUTLIST param with CODE",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, OUTLIST BBB, int CCC)
+                |   CODE:
+                |      XYZ;
+EOF
+            [ 1, 0, qr/Can't determine output type for 'BBB'/, "got type err" ],
+        ],
+
+        [
+            # a placeholder with a default value may not seem to make much
+            # sense, but it allows an argument to still be passed (or
+            # not), even if it;s no longer used.
+            "placeholder: typeless default param with CODE",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, BBB = 888, int CCC = 999)
+                |   CODE:
+                |      XYZ;
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*"AAA, BBB = 888, CCC\s*= 999"\)/,"usage" ],
+            [ 0, 0, qr/\bint\s+AAA\s*=\s*.*\Q(ST(0))/,        "AAA is ST(0)" ],
+            [ 0, 0, qr/\bCCC\s*=\s*.*\Q(ST(2))/,              "CCC is ST(2)" ],
+            [ 0, 1, qr/\bBBB;/,                               "no BBB decl" ],
+            [ 0, 1, qr/\b888\s*;/,                            "no 888 usage" ],
+        ],
+
+        [
+            "placeholder: allow SV *",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, SV *, int CCC)
+                |   CODE:
+                |      XYZ;
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*\Q"AAA, SV *, CCC")/,    "usage" ],
+            [ 0, 0, qr/\bint\s+AAA\s*=\s*.*\Q(ST(0))/,        "AAA is ST(0)" ],
+            [ 0, 0, qr/\bint\s+CCC\s*=\s*.*\Q(ST(2))/,        "CCC is ST(2)" ],
+        ],
+
+        [
+            # Bodiless XSUBs can't use SV* as a placeholder ...
+            "placeholder: SV *, bodiless",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, SV    *, int CCC)
+EOF
+            [ 1, 0, qr/Error: parameter 'SV \*' not valid as a C argument/,
+                                                           "got arg err" ],
+        ],
+
+        [
+            # ... unless they use C_ARGS to define how the C fn should
+            # be called.
+            "placeholder: SV *, bodiless C_ARGS",
+            [ Q(<<'EOF') ],
+                |int
+                |foo(int AAA, SV    *, int CCC)
+                |    C_ARGS: AAA, CCC
+EOF
+            [ 0, 0, qr/_usage\(cv,\s*\Q"AAA, SV *, CCC")/,    "usage" ],
+            [ 0, 0, qr/\bint\s+AAA\s*=\s*.*\Q(ST(0))/,        "AAA is ST(0)" ],
+            [ 0, 0, qr/\bint\s+CCC\s*=\s*.*\Q(ST(2))/,        "CCC is ST(2)" ],
+            [ 0, 0, qr/\bRETVAL\s*=\s*\Qfoo(AAA, CCC);/,      "autocall" ],
         ],
 
 
