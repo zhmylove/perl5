@@ -372,9 +372,19 @@ L</Modules and Pragmata> section.
 
 =over 4
 
-=item XXX-some-platform
+=item arm64 DARWIN
 
-XXX
+Fix arm64 darwin hints when using use64bitall with Configure [GH #22672]
+
+=item Android
+
+Changes to perl_langinfo.h for Android [GH #22650] related to [GH #22627]
+
+=item Cygwin
+
+cygwin.c: fix several silly/terrible C errors [GH #22724]
+
+workaround DLL load address conflict [GH #22696]
 
 =back
 
@@ -390,7 +400,16 @@ well.
 
 =item *
 
-XXX
+Enable removing most of mathoms.c and stub functions [GH #22691] and [GH #22714]
+
+=item *
+
+reinstate apostrophe as package separator behind a default enabled feature, 
+which is disabled from feature bundle 5.41.
+
+=item *
+
+pp_reverse: don't COW buffer just to then un-COW it [GH #22729]
 
 =back
 
