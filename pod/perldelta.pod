@@ -439,6 +439,12 @@ string C<eval>, any identifier starting with I<cut> (e.g. C<=cute>).
 Builds with C<-msse> and quadmath on 32-bit x86 systems would crash
 with a misaligned access early in the build. [GH #22577]
 
+=item *
+
+On threaded builds on POSIX-like systems, if the perl signal handler
+receives we now resend the signal to the main perl thread.  Previously
+this would crash.  [GH #22487]
+
 =back
 
 =head1 Known Problems
