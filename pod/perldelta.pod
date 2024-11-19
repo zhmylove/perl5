@@ -142,9 +142,43 @@ XXX Remove this section if F<Porting/corelist-perldelta.pl> did not add any cont
 
 =item *
 
-L<XXX> has been upgraded from version A.xx to B.yy.
+L<B::Deparse> has been upgraded from version 1.78 to 1.80.
 
-XXX If there was something important to note about this change, include that here.
+It now retains parens around logical negations on the left-hand side of
+comparisons (such as C<(!$x) == $y>) because omitting them would trigger a
+C<Possible precedence problem> warning since perl v5.41.4. [GH #22661]
+
+=item *
+
+L<builtin> has been upgraded from version 0.015 to 0.016.
+
+=item *
+
+L<CPAN> has been upgraded from version 2.37 to 2.38.
+
+=item *
+
+L<DB> has been upgraded from version 1.08 to 1.09.
+
+=item *
+
+L<ExtUtils::ParseXS> has been upgraded from version 3.55 to 3.56.
+
+=item *
+
+L<ExtUtils::Typemaps> has been upgraded from version 3.55 to 3.56.
+
+=item *
+
+L<feature> has been upgraded from version 1.91 to 1.92.
+
+=item *
+
+L<fields> has been upgraded from version 2.25 to 2.26.
+
+=item *
+
+L<HTTP::Tiny> has been upgraded from version 0.088 to 0.090.
 
 =item *
 
@@ -165,11 +199,45 @@ correctly.
 
 =item *
 
-L<B::Deparse> has been upgraded from version 1.78 to 1.79.
+L<Memoize> has been upgraded from version 1.16 to 1.17.
 
-It now retains parens around logical negations on the left-hand side of
-comparisons (such as C<(!$x) == $y>) because omitting them would trigger a
-C<Possible precedence problem> warning since perl v5.41.4. [GH #22661]
+=item *
+
+L<Module::CoreList> has been upgraded from version 5.20241020 to 5.20241120.
+
+=item *
+
+L<NDBM_File> has been upgraded from version 1.17 to 1.18.
+
+=item *
+
+L<ODBM_File> has been upgraded from version 1.18 to 1.19.
+
+=item *
+
+L<parent> has been upgraded from version 0.242 to 0.242_001.
+
+=item *
+
+L<POSIX> has been upgraded from version 2.22 to 2.23.
+
+=item *
+
+L<Scalar::Util> has been upgraded from version 1.68 to 1.68_01.
+
+=item *
+
+L<Term::Table> has been upgraded from version 0.022 to 0.023.
+
+=item *
+
+L<warnings> has been upgraded from version 1.70 to 1.71.
+
+=item *
+
+L<XXX> has been upgraded from version A.xx to B.yy.
+
+XXX If there was something important to note about this change, include that here.
 
 =back
 
