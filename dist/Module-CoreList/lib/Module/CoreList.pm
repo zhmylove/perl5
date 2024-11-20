@@ -22485,11 +22485,11 @@ for my $version ( sort { $a <=> $b } keys %released ) {
             'Config'                => '5.041007',
             'Module::CoreList'      => '5.20241220',
             'Module::CoreList::Utils'=> '5.20241220',
+            'XS::APItest'           => '1.39',
         },
         removed => {
         }
     },
-
 );
 
 sub is_core
