@@ -2247,15 +2247,15 @@ END_EXTERN_C
 
 #define isBLANK_LC_uni(c)    isBLANK_LC_uvchr(UNI_TO_NATIVE(c))
 
-/* The "_safe" macros make sure that we don't attempt to read beyond 'e', but
- * they don't otherwise go out of their way to look for malformed UTF-8.  If
- * they can return accurate results without knowing if the input is otherwise
- * malformed, they do so.  For example isASCII is accurate in spite of any
- * non-length malformations because it looks only at a single byte. Likewise
- * isDIGIT looks just at the first byte for code points 0-255, as all UTF-8
- * variant ones return FALSE.  But, if the input has to be well-formed in order
- * for the results to be accurate, the macros will test and if malformed will
- * call a routine to die
+/* The "_safe" macros make sure that we don't attempt to read the byte at 'e'
+ * or beyond, but they don't otherwise go out of their way to look for
+ * malformed UTF-8.  If they can return accurate results without knowing if the
+ * input is otherwise malformed, they do so.  For example isASCII is accurate
+ * in spite of any non-length malformations because it looks only at a single
+ * byte. Likewise isDIGIT looks just at the first byte for code points 0-255,
+ * as all UTF-8 variant ones return FALSE.  But, if the input has to be
+ * well-formed in order for the results to be accurate, the macros will test
+ * and if malformed will call a routine to die
  *
  * Except for toke.c, the macros do assume that e > p, asserting that on
  * DEBUGGING builds.  Much code that calls these depends on this being true,
