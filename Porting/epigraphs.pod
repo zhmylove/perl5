@@ -17,6 +17,12 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.41.6 - Jon Postel
+
+L<Announced on 2024-11-20 by Thibault Duponchelle|https://www.nntp.perl.org/group/perl.perl5.porters/2024/11/msg269167.html>
+
+  Be conservative in what you do, and liberal in what you accept.
+
 =head2 v5.41.5 - Great P.I. of the Universe, Under A Killing Moon
 
 L<Announced on 2024-10-20 by Richard Leach|https://www.nntp.perl.org/group/perl.perl5.porters/2024/10/msg268977.html>
