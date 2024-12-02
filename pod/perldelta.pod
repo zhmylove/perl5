@@ -450,6 +450,12 @@ Declaring a lexically scoped array or hash using C<state> within a subroutine
 and then immediately returning no longer triggers a "Bizarre copy of HASH/ARRAY
 in subroutine exit" error. [GH #18630]
 
+=item *
+
+C<builtin::trim()> didn't properly clear C<TARG> which could result in
+out of date cached numeric versions of the value being used on a
+second evaluation.  Properly clear any cached values. [GH #22784]
+
 =back
 
 =head1 Known Problems
