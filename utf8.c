@@ -1489,11 +1489,11 @@ because it is possible for multiple malformations to be present in the same
 sequence.  An example would be an overlong sequence evaluating to a surrogate
 when surrogates are forbidden.  Another example is overflow; standard UTF-8
 never overflows, so something that does must have been expressed using Perl's
-extended UTF-8.  If also is above all legal Unicode code points.  So there will
-be a bit set for up to all three of these things.  Overflow always,
+extended UTF-8.  It also is above all legal Unicode code points.  So there will
+be a bit set for up to all three of these things.  1) Overflow always; 2)
 perl-extended if the calling flags indicate those should be rejected or warned
-about, and above-Unicode provided the calling flags indicate those should be
-rejected or warned about.
+about; and 3) above-Unicode, provided the calling flags indicate those should
+be rejected or warned about.
 
 If you don't care about the system's messages text nor warning categories, you
 can customize error handling by calling one of the C<_error> functions, using
