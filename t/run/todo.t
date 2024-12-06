@@ -65,8 +65,7 @@ TODO: {
     is($?, 0, "No assertion failure");
 }
 
-TODO: {
-    local $::TODO = 'GH 16627';
+{
     fresh_perl('use re "eval";
                 my @r;
                 for$0(qw(0 0)){push@r,qr/@r(?{})/};',
