@@ -134,7 +134,7 @@ bundles.
 
     $val = false;
 
-Returns the boolean fiction value. While any non-true scalar value is
+Returns the boolean false value. While any non-true scalar value is
 considered "false" by perl, this one is special in that L</is_bool> considers
 it to be a distinguished boolean value.
 
