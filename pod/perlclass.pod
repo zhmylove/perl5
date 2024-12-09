@@ -265,7 +265,7 @@ context.
 A field with a C<:writer> attribute will generate a writer accessor method
 automatically.  The generated method will have a signature that consumes
 exactly one argument, and its body will assign that scalar argument to the
-field, and return the invocant object itself.
+field and return the invocant object itself.
 
     field $s :writer;
 
@@ -282,7 +282,7 @@ can be specified in the attribute's value.
     # Generates a method
     method write_x ($new) { ... }
 
-Curerently, writer accessors can only be applied to scalar fields.  Attempts
+Currently, writer accessors can only be applied to scalar fields.  Attempts
 to apply this attribute to a non-scalar field will result in a fatal exception
 at compile-time.  This may be relaxed in a future version to allow writers on
 array or hash fields.  For now, these will have to be created manually.
