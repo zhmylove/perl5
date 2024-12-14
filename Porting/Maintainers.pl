@@ -885,8 +885,8 @@ our %Modules = (
     },
 
     'parent' => {
-        'DISTRIBUTION' => 'CORION/parent-0.243.tar.gz',
-        'SYNCINFO'     => 'tib on Wed Dec  4 17:52:22 2024',
+        'DISTRIBUTION' => 'CORION/parent-0.244.tar.gz',
+        'SYNCINFO'     => 'jkeenan on Sat Dec 14 07:56:36 2024',
         'FILES'        => q[cpan/parent],
         'EXCLUDED'     => [
             qr{^xt}
