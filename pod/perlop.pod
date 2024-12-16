@@ -480,22 +480,17 @@ Shifting by negative number of bits means the reverse shift: left
 shift becomes right shift, right shift becomes left shift.  This is
 unlike in C, where negative shift is undefined.
 
-Shifting by more bits than the size of the integers means most of the
-time zero (all bits fall off), except that under S<C<use integer>>
-right overshifting a negative shiftee results in -1.  This is unlike
-in C, where shifting by too many bits is undefined.  A common C
-behavior is "shift by modulo wordbits", so that for example
-
-    1 >> 64 == 1 >> (64 % 64) == 1 >> 0 == 1  # Common C behavior.
-
-but that is completely accidental.
+Shifting by a value greater than or equal to integer size (in bits)
+results in zero (all bits fall off), except that under S<C<use integer>>
+right shifting a negative value by such an amount results in -1.
+This is unlike in C, where shifting by too many bits is undefined.
 
 If you get tired of being subject to your platform's native integers,
 the S<C<use bigint>> pragma neatly sidesteps the issue altogether:
 
     print 20 << 20;  # 20971520
-    print 20 << 40;  # 5120 on 32-bit machines,
-                     # 21990232555520 on 64-bit machines
+    print 20 << 32;  # 0 with 32-bit integer,
+                     # 85899345920 with 64-bit integer
     use bigint;
     print 20 << 100; # 25353012004564588029934064107520
 
