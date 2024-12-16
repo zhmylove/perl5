@@ -329,8 +329,8 @@ our %Modules = (
     },
 
     'CPAN::Meta::YAML' => {
-        'DISTRIBUTION' => 'ETHER/CPAN-Meta-YAML-0.019.tar.gz',
-        'SYNCINFO'     => 'corion on Mon Dec 16 09:12:25 2024',
+        'DISTRIBUTION' => 'ETHER/CPAN-Meta-YAML-0.020.tar.gz',
+        'SYNCINFO'     => 'ether on Mon Dec 16 12:20:28 2024',
         'FILES'        => q[cpan/CPAN-Meta-YAML],
         'EXCLUDED'     => [
             't/00-report-prereqs.t',
