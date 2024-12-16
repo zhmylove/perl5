@@ -642,56 +642,58 @@ cpan/CPAN-Meta-Requirements/t/from-hash.t
 cpan/CPAN-Meta-Requirements/t/merge.t
 cpan/CPAN-Meta-Requirements/t/strings.t
 cpan/CPAN-Meta-YAML/lib/CPAN/Meta/YAML.pm				CPAN-Meta-YAML files
-cpan/CPAN-Meta-YAML/t/01_api.t
+cpan/CPAN-Meta-YAML/t/01_api.t						Test file related to CPAN::Meta::YAML
 cpan/CPAN-Meta-YAML/t/01_compile.t					CPAN-Meta-YAML files
-cpan/CPAN-Meta-YAML/t/10_read.t
-cpan/CPAN-Meta-YAML/t/11_read_string.t
-cpan/CPAN-Meta-YAML/t/12_write.t
-cpan/CPAN-Meta-YAML/t/13_write_string.t
+cpan/CPAN-Meta-YAML/t/10_read.t						Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/11_read_string.t					Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/12_write.t					Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/13_write_string.t					Test file related to CPAN::Meta::YAML
 cpan/CPAN-Meta-YAML/t/20_subclass.t					CPAN-Meta-YAML files
-cpan/CPAN-Meta-YAML/t/21_yamlpm_compat.t
-cpan/CPAN-Meta-YAML/t/30_yaml_spec_tml.t
-cpan/CPAN-Meta-YAML/t/31_local_tml.t
-cpan/CPAN-Meta-YAML/t/32_world_tml.t
-cpan/CPAN-Meta-YAML/t/86_fail.t
-cpan/CPAN-Meta-YAML/t/data/ascii.yml
-cpan/CPAN-Meta-YAML/t/data/latin1.yml
+cpan/CPAN-Meta-YAML/t/21_yamlpm_compat.t				Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/30_yaml_spec_tml.t				Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/31_local_tml.t					Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/32_world_tml.t					Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/86_fail.t						Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/data/ascii.yml					CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/data/latin1.yml					CPAN::Meta::YAML
 cpan/CPAN-Meta-YAML/t/data/multibyte.yml				CPAN-Meta-YAML files
 cpan/CPAN-Meta-YAML/t/data/utf_16_le_bom.yml				CPAN-Meta-YAML files
-cpan/CPAN-Meta-YAML/t/data/utf_8_bom.yml
-cpan/CPAN-Meta-YAML/t/lib/SubtestCompat.pm
-cpan/CPAN-Meta-YAML/t/lib/TestBridge.pm
-cpan/CPAN-Meta-YAML/t/lib/TestML/Tiny.pm
-cpan/CPAN-Meta-YAML/t/lib/TestUtils.pm
-cpan/CPAN-Meta-YAML/t/README.md
-cpan/CPAN-Meta-YAML/t/tml
-cpan/CPAN-Meta-YAML/t/tml-local/dump-error/circular.tml
-cpan/CPAN-Meta-YAML/t/tml-local/load-error/document.tml
-cpan/CPAN-Meta-YAML/t/tml-local/load-error/scalar.tml
-cpan/CPAN-Meta-YAML/t/tml-local/load-error/tag.tml
-cpan/CPAN-Meta-YAML/t/tml-local/load-warning/document.tml
-cpan/CPAN-Meta-YAML/t/tml-local/perl-to-yaml/quoting.tml
-cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/collection.tml
-cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/comment.tml
-cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/document.tml
-cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/mapping.tml
-cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/quoting.tml
-cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/scalar.tml
-cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/sequence.tml
-cpan/CPAN-Meta-YAML/t/tml-spec/basic-data.tml
-cpan/CPAN-Meta-YAML/t/tml-spec/unicode.tml
-cpan/CPAN-Meta-YAML/t/tml-world/Acme-Time-Baby.tml
-cpan/CPAN-Meta-YAML/t/tml-world/Data-Swap.tml
-cpan/CPAN-Meta-YAML/t/tml-world/Games-Nintendo-Wii-Mii.tml
-cpan/CPAN-Meta-YAML/t/tml-world/HTML-WebDAO.tml
-cpan/CPAN-Meta-YAML/t/tml-world/ITS-SIN-FIDS-Content-XML.tml
-cpan/CPAN-Meta-YAML/t/tml-world/Plagger.tml
-cpan/CPAN-Meta-YAML/t/tml-world/Spreadsheet-Read.tml
-cpan/CPAN-Meta-YAML/t/tml-world/Template-Provider-Unicode-Japanese.tml
-cpan/CPAN-Meta-YAML/t/tml-world/toolbar.tml
-cpan/CPAN-Meta-YAML/t/tml-world/Vanilla-Perl.tml
-cpan/CPAN-Meta-YAML/t/tml-world/YAML-Tiny-META.tml
-cpan/CPAN-Meta-YAML/t/tml-world/yaml_org.tml
+cpan/CPAN-Meta-YAML/t/data/utf_8_bom.yml				CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/lib/SubtestCompat.pm				Module related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/lib/TestBridge.pm					Module related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/lib/TestML/Tiny.pm				Module related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/lib/TestUtils.pm					Module related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/README.md						CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml						CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/dump-error/circular.tml			Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/load-error/document.tml			Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/load-error/scalar.tml			Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/load-error/tag.tml			Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/load-warning/document.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/perl-to-yaml/quoting.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/collection.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/comment.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/document.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/mapping.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/quoting.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/scalar.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-local/yaml-roundtrip/sequence.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-spec/basic-data.tml				Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-spec/multiline.tml				CPAN-Meta-YAML
+cpan/CPAN-Meta-YAML/t/tml-spec/unicode.tml				Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/Acme-Time-Baby.tml			Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/Data-Swap.tml				Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/Games-Nintendo-Wii-Mii.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/HTML-WebDAO.tml				Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/ITS-SIN-FIDS-Content-XML.tml		Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/Plagger.tml				Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/Spreadsheet-Read.tml			Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/Template-Provider-Unicode-Japanese.tml	Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/toolbar.tml				Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/Vanilla-Perl.tml			Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/YAML-Tiny-META.tml			Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/t/tml-world/yaml_org.tml				Test file related to CPAN::Meta::YAML
+cpan/CPAN-Meta-YAML/weaver.ini						CPAN-Meta-YAML
 cpan/DB_File/config.in			Part of Berkeley DB configuration
 cpan/DB_File/DB_File.pm			Berkeley DB extension Perl module
 cpan/DB_File/DB_File.xs			Berkeley DB extension external subroutines
