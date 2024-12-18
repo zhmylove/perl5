@@ -330,7 +330,7 @@ our %Modules = (
 
     'CPAN::Meta::YAML' => {
         'DISTRIBUTION' => 'ETHER/CPAN-Meta-YAML-0.020.tar.gz',
-        'SYNCINFO'     => 'ether on Mon Dec 16 12:20:28 2024',
+        'SYNCINFO'     => 'jkeenan on Wed Dec 18 08:00:14 2024',
         'FILES'        => q[cpan/CPAN-Meta-YAML],
         'EXCLUDED'     => [
             't/00-report-prereqs.t',
