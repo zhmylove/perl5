@@ -22481,11 +22481,19 @@ for my $version ( sort { $a <=> $b } keys %released ) {
     5.041007 => {
         delta_from => 5.041006,
         changed => {
+            'B::Deparse'            => '1.81',
             'B::Op_private'         => '5.041007',
+            'CPAN::Meta::YAML'      => '0.020',
             'Config'                => '5.041007',
+            'IO::Socket::IP'        => '0.43',
             'Module::CoreList'      => '5.20241220',
             'Module::CoreList::Utils'=> '5.20241220',
-            'XS::APItest'           => '1.39',
+            'Opcode'                => '1.67',
+            'XS::APItest'           => '1.40',
+            'builtin'               => '0.017',
+            'feature'               => '1.93',
+            'parent'                => '0.244',
+            'warnings'              => '1.72',
         },
         removed => {
         }
