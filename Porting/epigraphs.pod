@@ -17,6 +17,16 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.41.7 - Martha Wells
+
+L<Announced on 2024-12-20 by Max Maischein|https://www.nntp.perl.org/group/perl.perl5.porters/2024/12/msg269316.html>
+
+   Indah glared at me, but it was more wry than angry. "Is that what you think?
+   Because you keep insisting it's a mysterious ultra-hacker."
+   Okay, that one stung. "I didn't use the words 'mysteriious' or 'ultra.'"
+   Aylen watched like it was one of those human games where they threw
+   balls at each other.
+
 =head2 v5.41.6 - Jon Postel
 
 L<Announced on 2024-11-20 by Thibault Duponchelle|https://www.nntp.perl.org/group/perl.perl5.porters/2024/11/msg269167.html>
