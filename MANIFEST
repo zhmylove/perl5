@@ -2528,7 +2528,6 @@ cpan/Test-Harness/t/yamlish-writer.t				Test::Harness test
 cpan/Test-Simple/lib/ok.pm							Module related to Test::Simple
 cpan/Test-Simple/lib/Test/Builder.pm						Module related to Test::Simple
 cpan/Test-Simple/lib/Test/Builder/Formatter.pm					Module related to Test::Simple
-cpan/Test-Simple/lib/Test/Builder/IO/Scalar.pm					Module related to Test::Simple
 cpan/Test-Simple/lib/Test/Builder/Module.pm					Module related to Test::Simple
 cpan/Test-Simple/lib/Test/Builder/Tester.pm					Module related to Test::Simple
 cpan/Test-Simple/lib/Test/Builder/Tester/Color.pm				Module related to Test::Simple
