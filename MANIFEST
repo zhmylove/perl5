@@ -2586,6 +2586,7 @@ cpan/Test-Simple/lib/Test2/Compare/Set.pm					Test-Simple
 cpan/Test-Simple/lib/Test2/Compare/String.pm					Test-Simple
 cpan/Test-Simple/lib/Test2/Compare/Undef.pm					Test-Simple
 cpan/Test-Simple/lib/Test2/Compare/Wildcard.pm					Test-Simple
+cpan/Test-Simple/lib/Test2/Env.pm						Test-Simple
 cpan/Test-Simple/lib/Test2/Event.pm						Module related to Test::Simple
 cpan/Test-Simple/lib/Test2/Event/Bail.pm					Module related to Test::Simple
 cpan/Test-Simple/lib/Test2/Event/Diag.pm					Module related to Test::Simple
