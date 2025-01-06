@@ -1634,12 +1634,12 @@ Perl_utf8_to_uv_msgs_helper_(const U8 * const s0,
      * than a single character */
     const U8 * send = e;
 
-    SSize_t curlen = send - s0;
+    Size_t curlen = send - s0;
     U32 possible_problems;  /* A bit is set here for each potential problem
                                found as we go along */
     UV uv = 0;
-    SSize_t expectlen;    /* How long should this sequence be? */
-    SSize_t avail_len;    /* When input is too short, gives what that is */
+    Size_t expectlen;    /* How long should this sequence be? */
+    Size_t avail_len;    /* When input is too short, gives what that is */
 
     dTHX;
 
@@ -1892,7 +1892,7 @@ Perl_utf8_to_uv_msgs_helper_(const U8 * const s0,
                  * full length with occurrences of the smallest continuation
                  * byte.  For surrogates we could just look at the bytes, but
                  * this single algorithm works for both those and supers. */
-                for (unsigned i = curlen; i < expectlen; i++) {
+                for (Size_t i = curlen; i < expectlen; i++) {
                     uv = UTF8_ACCUMULATE(uv, UTF8_MIN_CONTINUATION_BYTE);
                 }
             }
