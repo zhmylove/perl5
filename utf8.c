@@ -2096,7 +2096,8 @@ Perl_utf8_to_uv_msgs_helper_(const U8 * const s0,
             switch (this_problem) {
               default:
                 Perl_croak(aTHX_ "panic: Unexpected case value in "
-                                 " utf8n_to_uvchr_msgs() %d", this_problem);
+                                 " utf8n_to_uvchr_msgs() %" U32uf,
+                           this_problem);
                 /* NOTREACHED */
                 break;
 
