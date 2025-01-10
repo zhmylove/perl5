@@ -1634,7 +1634,6 @@ Perl_utf8_to_uv_msgs_helper_(const U8 * const s0,
      * than a single character */
     const U8 * send = e;
 
-    Size_t curlen = send - s0;
     U32 possible_problems;  /* A bit is set here for each potential problem
                                found as we go along */
     UV uv = 0;
@@ -1723,11 +1722,13 @@ Perl_utf8_to_uv_msgs_helper_(const U8 * const s0,
      * allowed one, we could allow in something that shouldn't have been.
      */
 
-    if (UNLIKELY(curlen <= 0)) {
+    Size_t curlen;
+    if (UNLIKELY(s0 >= send)) {
         possible_problems |= UTF8_GOT_EMPTY;
         curlen = 0;
         goto ready_to_handle_errors;
     }
+    curlen = send - s0;
 
     /* We now know we can examine the first byte of the input */
     expectlen = UTF8SKIP(s0);
