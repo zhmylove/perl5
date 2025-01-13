@@ -21,19 +21,19 @@ ok (my $conf = Config::Perl::V::plv2hash (<DATA>), "Read perl -v block");
 ok (exists $conf->{$_}, "Has $_ entry") for qw( build environment config inc );
 
 is ($conf->{build}{osname}, $conf->{config}{osname}, "osname");
-is ($conf->{build}{stamp}, "Feb 28 2023 18:30:03", "Build time");
-is ($conf->{config}{version}, "5.37.10", "reconstructed \$Config{version}");
+is ($conf->{build}{stamp}, "Jul  2 2024 14:28:20", "Build time");
+is ($conf->{config}{version}, "5.41.1", "reconstructed \$Config{version}");
 
 my $opt = Config::Perl::V::plv2hash ("")->{build}{options};
 foreach my $o (sort qw(
-	DEBUGGING HAS_TIMES MULTIPLICITY PERL_COPY_ON_WRITE PERL_RC_STACK
-	PERL_DONT_CREATE_GVSV PERL_HASH_FUNC_SIPHASH13 PERL_HASH_USE_SBOX32
-	PERLIO_LAYERS PERL_MALLOC_WRAP PERL_OP_PARENT PERL_PRESERVE_IVUV
-	PERL_TRACK_MEMPOOL PERL_USE_DEVEL PERL_USE_SAFE_PUTENV USE_64_BIT_ALL
-	USE_64_BIT_INT USE_ITHREADS USE_LARGE_FILES USE_LOCALE
-	USE_LOCALE_COLLATE USE_LOCALE_CTYPE USE_LOCALE_NUMERIC USE_LOCALE_TIME
-	USE_LONG_DOUBLE USE_PERL_ATOF USE_PERLIO USE_REENTRANT_API
-	USE_THREAD_SAFE_LOCALE
+	DEBUGGING HAS_LONG_DOUBLE HAS_STRTOLD HAS_TIMES MULTIPLICITY
+	PERL_COPY_ON_WRITE PERL_DONT_CREATE_GVSV PERL_HASH_FUNC_SIPHASH13
+	PERL_HASH_USE_SBOX32 PERLIO_LAYERS PERL_MALLOC_WRAP PERL_OP_PARENT
+	PERL_PRESERVE_IVUV PERL_RC_STACK PERL_TRACK_MEMPOOL PERL_USE_DEVEL
+	PERL_USE_SAFE_PUTENV USE_64_BIT_ALL USE_64_BIT_INT USE_ITHREADS
+	USE_LARGE_FILES USE_LOCALE USE_LOCALE_COLLATE USE_LOCALE_CTYPE
+	USE_LOCALE_NUMERIC USE_LOCALE_TIME USE_PERL_ATOF USE_PERLIO
+	USE_QUADMATH USE_REENTRANT_API USE_THREAD_SAFE_LOCALE
 	)) {
     is ($conf->{build}{options}{$o}, 1, "Runtime option $o set");
     delete $opt->{$o};
@@ -43,7 +43,7 @@ foreach my $o (sort keys %$opt) {
     }
 
 eval { require Digest::MD5; };
-my $md5 = $@ ? "0" x 32 : "964776ac5595a8a584dfba7ee063e4b9";
+my $md5 = $@ ? "0" x 32 : "0e8685083752ea4fa7379faeadf0d05b";
 ok (my $sig = Config::Perl::V::signature ($conf), "Get signature");
 
 SKIP: {
@@ -55,7 +55,7 @@ is_deeply ($conf->{build}{patches}, [ "uncommitted-changes" ], "No patches");
 
 my %check = (
     alignbytes      => 16,
-    api_version     => 37,
+    api_version     => 41,
     bincompat5005   => undef,	# GONE, chainsawed
     byteorder       => 12345678,
     cc              => "cc",
@@ -85,7 +85,114 @@ ok (exists $info->{$_}, "Summary has $_") for qw( cc config_args usemymalloc def
 is ($info->{default_inc_excludes_dot}, "define", "This build has . NOT in INC");
 
 __END__
-Summary of my perl5 (revision 5 version 37 subversion 10) configuration:
+Summary of my perl5 (revision 5 version 41 subversion 1) configuration:
+
+  Platform:
+    osname=linux
+    osvers=6.9.7-1-default
+    archname=x86_64-linux-thread-multi-quadmath
+    uname='linux lx09 6.9.7-1-default #1 smp preempt_dynamic fri jun 28 05:50:47 utc 2024 (a5efffa) x86_64 x86_64 x86_64 gnulinux '
+    config_args='-Dusedevel -Duse64bitall -Dusethreads -Duseithreads -Dusequadmath -Doptimize=-O0 -g -Accflags=-DPERL_RC_STACK -des'
+    hint=recommended
+    useposix=true
+    d_sigaction=define
+    useithreads=define
+    usemultiplicity=define
+    use64bitint=define
+    use64bitall=define
+    uselongdouble=undef
+    usemymalloc=n
+    default_inc_excludes_dot=define
+  Compiler:
+    cc='cc'
+    ccflags ='-D_REENTRANT -D_GNU_SOURCE -pie -fPIE -fPIC -DDEBUGGING -DPERL_RC_STACK -fwrapv -fno-strict-aliasing -pipe -fstack-protector-strong -I/pro/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_FORTIFY_SOURCE=2'
+    optimize='-O0 -g'
+    cppflags='-D_REENTRANT -D_GNU_SOURCE -pie -fPIE -fPIC -DDEBUGGING -DPERL_RC_STACK -fwrapv -fno-strict-aliasing -pipe -fstack-protector-strong -I/pro/local/include'
+    ccversion=''
+    gccversion='13.3.0'
+    gccosandvers=''
+    intsize=4
+    longsize=8
+    ptrsize=8
+    doublesize=8
+    byteorder=12345678
+    doublekind=3
+    d_longlong=define
+    longlongsize=8
+    d_longdbl=define
+    longdblsize=16
+    longdblkind=3
+    ivtype='long'
+    ivsize=8
+    nvtype='__float128'
+    nvsize=16
+    Off_t='off_t'
+    lseeksize=8
+    alignbytes=16
+    prototype=define
+  Linker and Libraries:
+    ld='cc'
+    ldflags ='-L/pro/local/lib -fstack-protector-strong'
+    libpth=/usr/local/lib /usr/x86_64-suse-linux/lib /usr/lib /pro/local/lib /usr/lib64 /usr/local/lib64
+    libs=-lpthread -lgdbm -ldb -ldl -lm -lcrypt -lutil -lc -lgdbm_compat -lquadmath
+    perllibs=-lpthread -ldl -lm -lcrypt -lutil -lc -lquadmath
+    libc=/lib/../lib64/libc.so.6
+    so=so
+    useshrplib=false
+    libperl=libperl.a
+    gnulibc_version='2.39'
+  Dynamic Linking:
+    dlsrc=dl_dlopen.xs
+    dlext=so
+    d_dlsymun=undef
+    ccdlflags='-Wl,-E'
+    cccdlflags='-fPIC'
+    lddlflags='-shared -O0 -g -L/pro/local/lib -fstack-protector-strong'
+
+
+Characteristics of this binary (from libperl):
+  Compile-time options:
+    DEBUGGING
+    HAS_LONG_DOUBLE
+    HAS_STRTOLD
+    HAS_TIMES
+    MULTIPLICITY
+    PERLIO_LAYERS
+    PERL_COPY_ON_WRITE
+    PERL_DONT_CREATE_GVSV
+    PERL_HASH_FUNC_SIPHASH13
+    PERL_HASH_USE_SBOX32
+    PERL_MALLOC_WRAP
+    PERL_OP_PARENT
+    PERL_PRESERVE_IVUV
+    PERL_RC_STACK
+    PERL_TRACK_MEMPOOL
+    PERL_USE_DEVEL
+    PERL_USE_SAFE_PUTENV
+    USE_64_BIT_ALL
+    USE_64_BIT_INT
+    USE_ITHREADS
+    USE_LARGE_FILES
+    USE_LOCALE
+    USE_LOCALE_COLLATE
+    USE_LOCALE_CTYPE
+    USE_LOCALE_NUMERIC
+    USE_LOCALE_TIME
+    USE_PERLIO
+    USE_PERL_ATOF
+    USE_QUADMATH
+    USE_REENTRANT_API
+    USE_THREAD_SAFE_LOCALE
+  Built under linux
+  Compiled at Jul  2 2024 14:28:20
+  %ENV:
+    PERL6LIB="inst#/pro/3gl/CPAN/rakudo/install"
+  @INC:
+    lib
+    /pro/lib/perl5/site_perl/5.41.1/x86_64-linux-thread-multi-quadmath
+    /pro/lib/perl5/site_perl/5.41.1
+    /pro/lib/perl5/5.41.1/x86_64-linux-thread-multi-quadmath
+    /pro/lib/perl5/5.41.1
   Derived from: f0cf813c73daf1ae652b454fc8bc4828aec1f049
   Platform:
     osname=linux
