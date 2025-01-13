@@ -1615,7 +1615,7 @@ Perl_lex_peek_unichar(pTHX_ U32 flags)
     if (UTF) {
         U8 head;
         I32 unichar;
-        STRLEN len, retlen;
+        STRLEN len;
         if (s == bufend) {
             if (!lex_next_chunk(flags))
                 return -1;
