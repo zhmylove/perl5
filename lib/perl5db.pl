@@ -532,7 +532,7 @@ BEGIN {
 use vars qw($VERSION $header);
 
 # bump to X.XX in blead, only use X.XX_XX in maint
-$VERSION = '1.81';
+$VERSION = '1.82';
 
 $header = "perl5db.pl version $VERSION";
 
@@ -4798,7 +4798,7 @@ sub cmd_a {
     $line =~ s/\A\./$dbline/;
 
     # Should be a line number followed by an expression.
-    if ( my ($lineno, $expr) = $line =~ /^\s*(\d*)\s*(\S.+)/ ) {
+    if ( my ($lineno, $expr) = $line =~ /^\s*(\d*)\s*(\S.*)/ ) {
 
         if (! length($lineno)) {
             $lineno = $dbline;
@@ -4826,7 +4826,7 @@ sub cmd_a {
                 _set_breakpoint_enabled_status($filename, $lineno, 1);
             }
         } ## end if (length $expr)
-    } ## end if ($line =~ /^\s*(\d*)\s*(\S.+)/)
+    } ## end if ($line =~ /^\s*(\d*)\s*(\S.*)/)
     else {
 
         # Syntax wrong.
