@@ -1118,7 +1118,7 @@ variable form, for instance
 see L<perldata/"Demarcated variable names using braces"> for more
 information on this form and its uses.
 
-This variable was added in 5.25.7
+This variable was added in 5.25.7.
 
 If you need access to this functionality in older Perls you can use this
 function immediately after your regexp.
